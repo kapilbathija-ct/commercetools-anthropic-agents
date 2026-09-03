@@ -34,11 +34,13 @@ from shopping_agent_runtime import ShoppingAgent
 
 from ct_common import CTClient, ReferenceCache, load_settings
 from ct_common.checkout import CheckoutSessions
+from ct_common.sync_client import CTSyncClient
 from ct_merchant import (
     CommercetoolsMerchant,
     CTMerchantToolExecutor,
     build_merchant_config,
 )
+from ct_merchant.ledger import CustomObjectChangeLedger
 from ct_shopping import (
     CommercetoolsStorefront,
     CTShoppingSession,
@@ -47,6 +49,7 @@ from ct_shopping import (
 )
 
 from .checkout import install_checkout_routes
+from .ct_sessions import CustomObjectSessionStore
 from .host import append_user_turn, build_app, load_demo_env, stream_turn
 from .memory import MemoryFactEdit, install_memory_routes
 from .merchant import build_merchant_router
@@ -85,7 +88,18 @@ def create_app(
         backend = CommercetoolsStorefront(ct_client, cache=ReferenceCache())
     agent = build_agent(backend, model_client)
     store_url = settings.redis_url if redis_url is ... else redis_url
-    sessions = build_session_store(ShoppingSessionState, store_url)
+    # Three stores, in order of preference for a deployment with no instance affinity:
+    # Redis when a URL is configured, commercetools Custom Objects when asked for (no extra
+    # vendor, and the platform's own compare-and-set), and the in-process store otherwise --
+    # which is correct for exactly one long-lived worker and nothing else.
+    sync_client = None
+    if store_url:
+        sessions = build_session_store(ShoppingSessionState, store_url)
+    elif os.environ.get("SESSION_STORE") == "commercetools":
+        sync_client = CTSyncClient(settings)
+        sessions = CustomObjectSessionStore(ShoppingSessionState, sync_client)
+    else:
+        sessions = build_session_store(ShoppingSessionState, None)
     current_session = session_dependency(sessions, "/api/session")
     app = build_app(title="commercetools shopping agent")
     register_routes(app, agent=agent, backend=backend, sessions=sessions, current=current_session)
@@ -106,7 +120,14 @@ def create_app(
     # once. Its own session store and state type: an operator session is not a shopper's.
     if ct_client is not None:
         merchant_config = build_merchant_config()
-        merchant_backend = CommercetoolsMerchant(ct_client, config=merchant_config)
+        # Staging and approving are two different requests, so the ledger has to outlive
+        # the process that staged the change.
+        merchant_ledger = (
+            CustomObjectChangeLedger(merchant_config, sync_client) if sync_client else None
+        )
+        merchant_backend = CommercetoolsMerchant(
+            ct_client, config=merchant_config, ledger=merchant_ledger
+        )
         merchant_agent = MerchantAgent(
             backend=merchant_backend,
             skills_dir=ROOT / "ct_merchant" / "skills",
@@ -115,7 +136,12 @@ def create_app(
             memory_store=InMemoryMemoryStore(),
             executor_class=CTMerchantToolExecutor,
         )
-        merchant_sessions = build_session_store(MerchantSessionState, store_url)
+        if store_url:
+            merchant_sessions = build_session_store(MerchantSessionState, store_url)
+        elif sync_client is not None:
+            merchant_sessions = CustomObjectSessionStore(MerchantSessionState, sync_client)
+        else:
+            merchant_sessions = build_session_store(MerchantSessionState, None)
         app.include_router(
             build_merchant_router(
                 backend=merchant_backend,

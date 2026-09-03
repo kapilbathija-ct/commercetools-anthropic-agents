@@ -8,6 +8,7 @@ from ct_common.mapping import (
     money,
     parse_ref,
     select_price,
+    strip_test_prefix,
     swatch_label,
     to_product,
     to_product_details,
@@ -294,3 +295,12 @@ def test_money_separates_what_a_shopper_pays_from_what_the_catalogue_says():
     }
     assert money(price) == 23.52
     assert money(price, effective=False) == 27.67
+
+
+def test_the_projects_test_prefix_is_stripped_from_display_values():
+    """One family in this shared project carries "KMB"-tagged values from someone's earlier
+    test run. Offering a shopper "KMB Gold" as a finish is worse than showing nothing."""
+    assert swatch_label("KMB Gold:#FFD700") == "Gold"
+    assert swatch_label("KMB Lavender Blush:#fff0f5") == "Lavender Blush"
+    assert strip_test_prefix("KMB- Dry clean only") == "Dry clean only"
+    assert swatch_label("Gold:#FFD700") == "Gold"

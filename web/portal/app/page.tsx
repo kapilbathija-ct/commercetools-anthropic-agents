@@ -30,7 +30,7 @@ function StoreMark() {
       aria-hidden
       className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[10px] bg-(--ink) text-[16px] font-bold text-(--brand) shadow-[inset_0_-3px_0_rgba(0,0,0,0.18)]"
     >
-      A
+      K
     </span>
   );
 }
@@ -82,7 +82,7 @@ export default function PortalPage() {
   return (
     <>
       <PortalShell
-        brand={{ mark: <StoreMark />, name: "ACME Home", detail: "Merchant workspace" }}
+        brand={{ mark: <StoreMark />, name: "Hi Kapil", detail: "Merchant workspace" }}
         nav={nav}
         view={view}
         onViewChange={setView}

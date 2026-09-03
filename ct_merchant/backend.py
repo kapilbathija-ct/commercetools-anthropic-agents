@@ -22,6 +22,7 @@ What commercetools can and cannot supply, which is most of the design:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections import Counter, defaultdict
 from datetime import UTC, datetime, timedelta
@@ -88,12 +89,16 @@ class CommercetoolsMerchant(MerchantBackend):
         *,
         config: Any,
         cache: ReferenceCache | None = None,
+        ledger: Any = None,
     ) -> None:
         self._client = client
         self._settings = client.settings
         self._config = config
         self._cache = cache or ReferenceCache()
-        self._ledger = ChangeLedger(config)
+        # The in-process ledger is correct for one long-lived worker. A deployment with no
+        # instance affinity passes CustomObjectChangeLedger instead, because staging and
+        # approving are two different requests.
+        self._ledger = ledger or ChangeLedger(config)
 
     # -- Shared helpers ------------------------------------------------------------------
 
@@ -176,8 +181,10 @@ class CommercetoolsMerchant(MerchantBackend):
         self, session: MerchantSessionContext, period: str | None = None
     ) -> BusinessSnapshot:
         days = 30
-        window = await self._orders_since(days)
-        previous_all = await self._orders_since(days * 2)
+        # Two independent windows; no reason to wait for one before asking for the other.
+        window, previous_all = await asyncio.gather(
+            self._orders_since(days), self._orders_since(days * 2)
+        )
         cutoff = datetime.now(UTC) - timedelta(days=days)
         previous = [
             order
@@ -188,14 +195,13 @@ class CommercetoolsMerchant(MerchantBackend):
         sales = round(sum(self._order_total(order) for order in window), 2)
         prior_sales = round(sum(self._order_total(order) for order in previous), 2)
         orders = len(window)
+        current_alerts, issues = await asyncio.gather(
+            self.get_inventory_alerts(session), self.get_order_issues(session)
+        )
         alerts = AlertCounts(
-            low_stock=len(
-                [a for a in await self.get_inventory_alerts(session) if a.kind == "low_stock"]
-            ),
-            slow_movers=len(
-                [a for a in await self.get_inventory_alerts(session) if a.kind == "slow_mover"]
-            ),
-            order_issues=len(await self.get_order_issues(session)),
+            low_stock=len([a for a in current_alerts if a.kind == "low_stock"]),
+            slow_movers=len([a for a in current_alerts if a.kind == "slow_mover"]),
+            order_issues=len(issues),
             pending_changes=len(self._ledger.pending()),
         )
         return BusinessSnapshot(
@@ -548,15 +554,20 @@ class CommercetoolsMerchant(MerchantBackend):
                     if sku:
                         sold[sku] += line.get("quantity") or 0
 
+            # Only the genuinely short skus need a listing resolved, and those lookups are
+            # independent -- so they run together. Sequentially this was one round trip per
+            # flagged sku, in a row, and the largest single cost in a digest turn.
+            short = [
+                (sku, (inventory.get(sku) or {"sellable": 0})["sellable"])
+                for sku in skus
+                if (inventory.get(sku) or {"sellable": 0})["sellable"] < LOW_STOCK_THRESHOLD
+            ]
+            resolved = await asyncio.gather(
+                *(self._listing_for_sku(sku, units) for sku, units in short)
+            )
+
             alerts: list[InventoryAlert] = []
-            for sku in skus:
-                row = inventory.get(sku) or {"sellable": 0, "other_channels": 0}
-                units = row["sellable"]
-                if units >= LOW_STOCK_THRESHOLD:
-                    # The shop has plenty of its own; a low entry in some other channel is
-                    # not something the operator needs to act on.
-                    continue
-                listing = await self._listing_for_sku(sku, units)
+            for (sku, units), listing in zip(short, resolved, strict=True):
                 if listing is None:
                     continue
                 units_30d = sold.get(sku, 0)

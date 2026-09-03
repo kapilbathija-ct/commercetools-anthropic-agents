@@ -1,0 +1,35 @@
+# For the Vercel build only. Its Python runtime resolves with uv, and uv drops the
+# `#subdirectory=` fragment when it converts requirements.txt into a lockfile -- it clones
+# the reference repo and then reports that the root "does not appear to be a Python
+# project". uv can express a git subdirectory, but only here, not in a requirements line.
+#
+# requirements.txt stays the source of truth for local installs and CI, and both pin the
+# same commit. Bump them together.
+[project]
+name = "ct-agents-api"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "commerce-common",
+  "shopping-agent-core",
+  "shopping-agent-runtime",
+  "merchant-agent-core",
+  "merchant-agent-runtime",
+  "anthropic==0.122.0",
+  "pydantic==2.13.4",
+  "pydantic-settings==2.15.0",
+  "pyyaml==6.0.3",
+  "httpx==0.28.1",
+  "fastapi==0.141.1",
+  "uvicorn==0.52.3",
+  "python-dotenv==1.2.2",
+  "python-multipart==0.0.32",
+  "redis==6.4.0",
+]
+
+[tool.uv.sources]
+commerce-common = { git = "https://github.com/anthropics/commerce-agents", rev = "fd4d59224ab96b43c6dc6888207c67b3bd5a24cf", subdirectory = "commerce-common" }
+shopping-agent-core = { git = "https://github.com/anthropics/commerce-agents", rev = "fd4d59224ab96b43c6dc6888207c67b3bd5a24cf", subdirectory = "shopping-agent/core" }
+shopping-agent-runtime = { git = "https://github.com/anthropics/commerce-agents", rev = "fd4d59224ab96b43c6dc6888207c67b3bd5a24cf", subdirectory = "shopping-agent/runtime-messages-api" }
+merchant-agent-core = { git = "https://github.com/anthropics/commerce-agents", rev = "fd4d59224ab96b43c6dc6888207c67b3bd5a24cf", subdirectory = "merchant-agent/core" }
+merchant-agent-runtime = { git = "https://github.com/anthropics/commerce-agents", rev = "fd4d59224ab96b43c6dc6888207c67b3bd5a24cf", subdirectory = "merchant-agent/runtime-messages-api" }

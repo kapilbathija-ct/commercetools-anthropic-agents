@@ -15,15 +15,15 @@ import type { CartPayload } from "@/lib/types";
 
 type View = "assistant" | "orders";
 
-const ASSISTANT = "ACME Home Assistant";
+const ASSISTANT = "Hi Kapil Assistant";
 
 function Wordmark() {
   return (
     <span className="flex items-center gap-2.5 pr-1">
       <span aria-hidden className="grid h-[30px] w-[30px] place-items-center rounded-lg bg-(--ink) text-[15px] font-bold text-(--surface)">
-        A
+        K
       </span>
-      <span className="text-[17px] font-bold tracking-[-0.02em] text-(--ink)">ACME Home</span>
+      <span className="text-[17px] font-bold tracking-[-0.02em] text-(--ink)">Hi Kapil</span>
     </span>
   );
 }

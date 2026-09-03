@@ -53,6 +53,14 @@ OPTION_DENYLIST = frozenset(
 
 VARIANT_SEPARATOR = "#"
 
+# A display normalisation for this shared project only. Someone's earlier test run tagged
+# one product family's attribute values with a "KMB" prefix -- ``KMB Gold``,
+# ``KMB Lavender Blush``, ``KMB- Dry clean only`` -- so a shopper is offered "KMB Gold" as
+# a finish and the same colour appears twice, once prefixed and once not. The catalogue
+# data is not ours to rewrite, and the prefix is not a merchandising fact, so it is stripped
+# on the way out. Remove this once the tagged values are cleaned up in the project.
+TEST_VALUE_PREFIX = "KMB"
+
 
 def variant_ref(product_id: str, variant_id: int) -> str:
     return f"{product_id}{VARIANT_SEPARATOR}{variant_id}"
@@ -202,6 +210,13 @@ def currency_of(price: dict[str, Any] | None, default: str) -> str:
     return value.get("currencyCode") or default
 
 
+def strip_test_prefix(value: str) -> str:
+    """``"KMB Gold"`` and ``"KMB- Dry clean only"`` render without the tag."""
+    if not value.startswith(TEST_VALUE_PREFIX):
+        return value
+    return value[len(TEST_VALUE_PREFIX) :].lstrip("- ").strip() or value
+
+
 def swatch_label(value: str) -> str:
     """``"Light Pink:#FFB6C1"`` renders as ``Light Pink``.
 
@@ -210,6 +225,7 @@ def swatch_label(value: str) -> str:
     showing a shopper or letting the model repeat back. A colon that is neither -- as in
     ``"Set: two chairs"`` -- is left alone.
     """
+    value = strip_test_prefix(value)
     if ":" not in value:
         return value
     head, _, tail = value.rpartition(":")
@@ -449,7 +465,7 @@ def to_product_details(
     spec_text = localized(_attribute_map(master).get("productspec"), locale)
     if spec_text:
         for line in spec_text.splitlines():
-            cleaned = line.lstrip("-* ").strip()
+            cleaned = strip_test_prefix(line.strip()).lstrip("-* ").strip()
             if cleaned:
                 specs[f"detail {len(specs) + 1}"] = cleaned[:120]
 

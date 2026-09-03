@@ -123,7 +123,11 @@ def build_app(title: str, on_startup: Sequence[Callable[[], Awaitable[None]]] = 
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
+        # Loopback always, plus whatever DEMO_ALLOWED_ORIGIN_REGEX adds for a deployed
+        # host. Kept as one regex so the default stays exactly as the reference had it.
+        allow_origin_regex=os.environ.get(
+            "DEMO_ALLOWED_ORIGIN_REGEX", r"http://(localhost|127\.0\.0\.1):\d+"
+        ),
         allow_methods=["*"],
         allow_headers=["*"],
     )

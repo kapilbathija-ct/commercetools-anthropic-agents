@@ -21,7 +21,7 @@ export interface StoreFrame {
 
 export const FrameContext = createContext<StoreFrame>({
   chat: null,
-  assistantName: "ACME Home Assistant",
+  assistantName: "Hi Kapil Assistant",
   ask: () => {},
   closePanel: () => {},
 });

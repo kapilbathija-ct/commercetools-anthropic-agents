@@ -1,10 +1,15 @@
 # The commerce-agents reference packages, pinned at the reviewed commit. Never editable
 # paths: a local clone drifts and CI cannot reproduce it. Bump the ref in one place here.
-git+https://github.com/anthropics/commerce-agents@fd4d59224ab96b43c6dc6888207c67b3bd5a24cf#subdirectory=commerce-common
-git+https://github.com/anthropics/commerce-agents@fd4d59224ab96b43c6dc6888207c67b3bd5a24cf#subdirectory=shopping-agent/core
-git+https://github.com/anthropics/commerce-agents@fd4d59224ab96b43c6dc6888207c67b3bd5a24cf#subdirectory=shopping-agent/runtime-messages-api
-git+https://github.com/anthropics/commerce-agents@fd4d59224ab96b43c6dc6888207c67b3bd5a24cf#subdirectory=merchant-agent/core
-git+https://github.com/anthropics/commerce-agents@fd4d59224ab96b43c6dc6888207c67b3bd5a24cf#subdirectory=merchant-agent/runtime-messages-api
+#
+# Written as PEP 508 direct references (`name @ url`) rather than bare `git+...` lines.
+# Vercel's Python build converts requirements.txt into a pyproject.toml with uv, and a bare
+# git URL has no distribution name for it to key on -- it produces an invalid
+# `tool.uv.sources` entry and the build fails to parse its own generated file.
+commerce-common @ git+https://github.com/anthropics/commerce-agents@fd4d59224ab96b43c6dc6888207c67b3bd5a24cf#subdirectory=commerce-common
+shopping-agent-core @ git+https://github.com/anthropics/commerce-agents@fd4d59224ab96b43c6dc6888207c67b3bd5a24cf#subdirectory=shopping-agent/core
+shopping-agent-runtime @ git+https://github.com/anthropics/commerce-agents@fd4d59224ab96b43c6dc6888207c67b3bd5a24cf#subdirectory=shopping-agent/runtime-messages-api
+merchant-agent-core @ git+https://github.com/anthropics/commerce-agents@fd4d59224ab96b43c6dc6888207c67b3bd5a24cf#subdirectory=merchant-agent/core
+merchant-agent-runtime @ git+https://github.com/anthropics/commerce-agents@fd4d59224ab96b43c6dc6888207c67b3bd5a24cf#subdirectory=merchant-agent/runtime-messages-api
 
 # This project's own dependencies.
 anthropic==0.122.0

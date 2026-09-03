@@ -12,8 +12,8 @@ const instrumentSans = Instrument_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "ACME Home Merchant",
-  description: "The ACME Home back office, over commercetools.",
+  title: "Hi Kapil Merchant",
+  description: "The Hi Kapil back office, over commercetools.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

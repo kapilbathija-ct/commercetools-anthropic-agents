@@ -24,7 +24,13 @@ from merchant_agent import MerchantAgentConfig
 def build_merchant_config(**overrides: object) -> MerchantAgentConfig:
     analysis_dataset = os.environ.get("CT_ANALYSIS_BQ_DATASET") or None
     return MerchantAgentConfig(
-        brand_name="ACME Home",
+        brand_name="Hi Kapil",
+        # The reference defaults the merchant to Opus. A morning-digest turn there runs a
+        # skill load plus four reads and took 18-24 seconds end to end, which is a long
+        # silence in front of an audience. Sonnet answers the same turns in well under
+        # half that with no loss on this workload -- these are reads and arithmetic over
+        # small tables, not deep reasoning. MERCHANT_MODEL overrides it.
+        model=os.environ.get("MERCHANT_MODEL", "claude-sonnet-5"),
         approval_surface="the Approve button on the change preview card",
         # Every write is a staged change the host applies. apply_change succeeds only for a
         # change the approval surface marked approved, whatever is typed in chat.

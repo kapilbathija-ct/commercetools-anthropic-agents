@@ -1,0 +1,11 @@
+.venv/
+web/
+docs/
+ct_shopping/tests/
+ct_merchant/tests/
+ct_common/tests/
+tests/
+scripts/
+.pytest_cache/
+.ruff_cache/
+__pycache__/

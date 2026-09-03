@@ -150,3 +150,6 @@ class CTClient:
             "priceCountry": self._settings.country,
             "localeProjection": self._settings.locale,
         }
+
+    async def delete(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        return await self._request("DELETE", path, params=params)

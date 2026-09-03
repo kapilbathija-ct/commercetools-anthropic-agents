@@ -27,8 +27,8 @@ DOMAIN_SEARCH_NOTES = (
 
 def build_shopping_config(**overrides: object) -> ShoppingAgentConfig:
     return ShoppingAgentConfig(
-        brand_name="ACME Home",
-        assistant_name="the ACME Home assistant",
+        brand_name="Hi Kapil",
+        assistant_name="the Hi Kapil assistant",
         brand_voice="warm, concise, and plain about trade-offs",
         domain_search_notes=DOMAIN_SEARCH_NOTES,
         # Every system this catalogue has is wired; nothing is switched off.
