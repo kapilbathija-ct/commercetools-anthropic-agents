@@ -1,3 +1,11 @@
+/** A card Stripe always declines in test mode, with a generic decline. */
+export const STRIPE_DECLINED_CARD = {
+  number: "4000000000000002",
+  expiry: "12/34",
+  cvc: "123",
+  zip: "27601",
+};
+
 /** A card Stripe always approves in test mode. */
 export const STRIPE_TEST_CARD = {
   number: "4242424242424242",

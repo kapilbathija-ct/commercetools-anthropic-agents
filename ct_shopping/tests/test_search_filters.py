@@ -14,13 +14,14 @@ def test_a_price_range_becomes_a_platform_filter_in_minor_units():
     assert ranges["ranges"] == [{"from": "2000", "to": "6000"}]
 
 
-def test_an_open_ended_range_sends_only_the_bound_given():
-    assert Store._price_filter(SearchFilters(max_price=99.99))[0]["model"]["range"]["ranges"] == [
-        {"to": "9999"}
-    ]
-    assert Store._price_filter(SearchFilters(min_price=5.0))[0]["model"]["range"]["ranges"] == [
-        {"from": "500"}
-    ]
+def test_an_open_ended_range_still_sends_both_bounds():
+    """commercetools rejects a half-open range outright ("Reason: ranges[0].from"), so an
+    open end travels as an explicit sentinel rather than an omitted key."""
+    ceiling = Store._price_filter(SearchFilters(max_price=99.99))[0]["model"]["range"]["ranges"][0]
+    assert ceiling == {"from": "0", "to": "9999"}
+    floor = Store._price_filter(SearchFilters(min_price=5.0))[0]["model"]["range"]["ranges"][0]
+    assert floor["from"] == "500"
+    assert int(floor["to"]) > 500
 
 
 def test_no_price_bounds_means_no_platform_filter():

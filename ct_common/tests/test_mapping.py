@@ -7,6 +7,7 @@ from ct_common.mapping import (
     localized,
     money,
     parse_ref,
+    select_price,
     swatch_label,
     to_product,
     to_product_details,
@@ -225,3 +226,71 @@ def test_swatch_label_handles_this_catalogues_three_shapes():
     # A colon that is neither a swatch nor a repeat is left alone.
     assert swatch_label("Set: two chairs") == "Set: two chairs"
     assert swatch_label("Gold") == "Gold"
+
+
+def multi_currency_variant() -> dict:
+    """The real shape of a raw product read on this project: six prices, three currencies,
+    two of them USD, and no price selection to resolve them."""
+
+    def price(pid, cents, currency, country=None):
+        entry = {
+            "id": pid,
+            "value": {"centAmount": cents, "currencyCode": currency, "fractionDigits": 2},
+        }
+        if country:
+            entry["country"] = country
+        return entry
+
+    return {
+        "id": 1,
+        "prices": [
+            price("eur-1", 4000, "EUR"),
+            price("gbp-1", 3100, "GBP"),
+            price("usd-scoped", 3100, "USD", country="CA"),
+            price("usd-plain", 2767, "USD"),
+        ],
+        "attributes": [],
+    }
+
+
+def test_select_price_matches_the_currency_not_the_first_entry():
+    """Repricing the wrong currency while reporting the right one is worse than failing."""
+    chosen = select_price(multi_currency_variant(), "USD")
+    assert chosen["id"] == "usd-plain"
+    assert money(chosen) == 27.67
+
+
+def test_select_price_prefers_an_unscoped_price_over_a_country_scoped_one():
+    """Not the "sensible" preference, but the one the platform actually makes: for a
+    variant carrying both an unscoped USD price and a country-scoped USD price at different
+    amounts, commercetools' own selection resolved to the unscoped one. Guessing the other
+    way means a write landing on a price the shop never displays."""
+    assert select_price(multi_currency_variant(), "USD", "CA")["id"] == "usd-plain"
+    assert select_price(multi_currency_variant(), "USD", "US")["id"] == "usd-plain"
+
+
+def test_select_price_uses_a_country_scoped_price_only_when_nothing_is_unscoped():
+    variant = multi_currency_variant()
+    variant["prices"] = [p for p in variant["prices"] if p["id"] != "usd-plain"]
+    assert select_price(variant, "USD", "CA")["id"] == "usd-scoped"
+
+
+def test_select_price_returns_none_when_the_currency_is_absent():
+    assert select_price(multi_currency_variant(), "JPY") is None
+
+
+def test_a_resolved_price_from_price_selection_wins_outright():
+    variant = multi_currency_variant()
+    variant["price"] = {"value": {"centAmount": 999, "currencyCode": "USD", "fractionDigits": 2}}
+    assert money(select_price(variant, "USD")) == 9.99
+
+
+def test_money_separates_what_a_shopper_pays_from_what_the_catalogue_says():
+    """A merchant edits the list price; a shopper is quoted the discounted one. Conflating
+    them records a price move against a base the operator never saw."""
+    price = {
+        "value": {"centAmount": 2767, "currencyCode": "USD", "fractionDigits": 2},
+        "discounted": {"value": {"centAmount": 2352, "currencyCode": "USD", "fractionDigits": 2}},
+    }
+    assert money(price) == 23.52
+    assert money(price, effective=False) == 27.67

@@ -12,3 +12,6 @@ quote-style = "double"
 "service/sessions.py" = ["E501"]
 "service/host.py" = ["E501", "I001"]
 "service/memory.py" = ["E501", "I001"]
+# Diagnostic scripts: their long lines are print formatting, and wrapping them makes
+# the output harder to line up than the source is to read.
+"scripts/*.py" = ["E501"]

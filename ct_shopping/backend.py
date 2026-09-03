@@ -191,11 +191,12 @@ class CommercetoolsStorefront(StorefrontBackend):
         units. Applied by commercetools across every match, not just the fetched page."""
         if filters is None or (filters.min_price is None and filters.max_price is None):
             return None
-        span: dict[str, str] = {}
-        if filters.min_price is not None:
-            span["from"] = str(int(round(filters.min_price * 100)))
-        if filters.max_price is not None:
-            span["to"] = str(int(round(filters.max_price * 100)))
+        # Both bounds are required: commercetools rejects a half-open range with
+        # "expected value of type '[SearchFilterInput!]' ... Reason: ranges[0].from". So an
+        # open end is sent as an explicit sentinel rather than omitted.
+        low = int(round((filters.min_price or 0) * 100))
+        high = int(round(filters.max_price * 100)) if filters.max_price is not None else 100_000_000
+        span = {"from": str(low), "to": str(high)}
         return [
             {
                 "model": {

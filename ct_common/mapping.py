@@ -66,36 +66,6 @@ def parse_ref(reference: str) -> tuple[str, int | None]:
     return product_id, int(variant) if variant.isdigit() else None
 
 
-def all_locales(
-    entries: Any, locale: str, fallbacks: tuple[str, ...] = ("en-US", "en-GB", "en")
-) -> str:
-    """A GraphQL ``*AllLocales`` list as one display string.
-
-    Asked for a single locale, commercetools GraphQL returns null when the product has no
-    value for exactly that key -- and this project holds products named under ``en``
-    rather than ``en-US``, which rendered with no title at all. Preferring the session's
-    locale, then the fallbacks, then whatever exists means a product always has a name.
-    """
-    if not entries:
-        return ""
-    if isinstance(entries, str):
-        return entries
-    by_locale = {
-        entry.get("locale"): entry.get("value")
-        for entry in entries
-        if isinstance(entry, dict) and entry.get("value")
-    }
-    for candidate in (locale, *fallbacks):
-        if by_locale.get(candidate):
-            return str(by_locale[candidate])
-    # A language match before giving up: "en-GB" satisfies a request for "en".
-    language = locale.split("-")[0]
-    for key, value in by_locale.items():
-        if key and key.split("-")[0] == language:
-            return str(value)
-    return str(next(iter(by_locale.values()), ""))
-
-
 def localized(value: Any, locale: str, fallbacks: tuple[str, ...] = ("en-US", "en-GB")) -> str:
     """A LocalizedString, a set of them, or a plain scalar, as one display string."""
     if value is None:
@@ -114,18 +84,98 @@ def localized(value: Any, locale: str, fallbacks: tuple[str, ...] = ("en-US", "e
     return str(value)
 
 
-def money(price: dict[str, Any] | None) -> float:
+def all_locales(
+    entries: Any, locale: str, fallbacks: tuple[str, ...] = ("en-US", "en-GB", "en")
+) -> str:
+    """A GraphQL ``*AllLocales`` list as one display string.
+
+    Asked for a single locale, commercetools GraphQL returns null when the product has no
+    value for exactly that key -- and this project holds products named under ``en``
+    rather than ``en-US``, which rendered with no title at all. Preferring the session's
+    locale, then the fallbacks, then whatever exists means a product always has a name.
+    """
+    if not entries:
+        return ""
+    if isinstance(entries, str):
+        return entries
+    # REST hands back a LocalizedString object where GraphQL hands back a list of
+    # {locale, value}. Both reach these mappers, so both are accepted here.
+    if isinstance(entries, dict):
+        return localized(entries, locale, fallbacks)
+    by_locale = {
+        entry.get("locale"): entry.get("value")
+        for entry in entries
+        if isinstance(entry, dict) and entry.get("value")
+    }
+    for candidate in (locale, *fallbacks):
+        if by_locale.get(candidate):
+            return str(by_locale[candidate])
+    # A language match before giving up: "en-GB" satisfies a request for "en".
+    language = locale.split("-")[0]
+    for key, value in by_locale.items():
+        if key and key.split("-")[0] == language:
+            return str(value)
+    return str(next(iter(by_locale.values()), ""))
+
+
+def select_price(
+    variant: dict[str, Any], currency: str, country: str | None = None
+) -> dict[str, Any] | None:
+    """The price this deployment sells at, out of a variant's whole price list.
+
+    **Prefer letting commercetools resolve this.** A read that went through price selection
+    (``priceCurrency`` / ``priceCountry``) carries a single resolved ``price`` that also
+    carries its own ``id`` -- which is what a ``changePrice`` action needs, and what makes
+    the write land on the same price the storefront shows.
+
+    The fallback below exists only for a raw product read, which has no price selection,
+    and it is deliberately conservative. Modelling the platform's selection rules is a trap:
+    a variant here carries both an unscoped USD price and a ``country: "US"`` USD price at
+    different amounts, and commercetools' own selection for ``USD``/``US`` resolved to the
+    **unscoped** one. A heuristic that "sensibly" preferred the country-scoped price
+    therefore disagreed with the platform -- and for a write that means repricing a price
+    the shop never displays while reporting the one it does.
+    """
+    if variant.get("price"):
+        return variant["price"]
+    prices = variant.get("prices") or []
+    matching = [p for p in prices if (p.get("value") or {}).get("currencyCode") == currency]
+    if not matching:
+        return None
+    # Unscoped first, because that is what selection actually chose here; a scoped price is
+    # a last resort rather than a preference.
+    unscoped = [
+        p
+        for p in matching
+        if not p.get("country") and not p.get("customerGroup") and not p.get("channel")
+    ]
+    if unscoped:
+        return unscoped[0]
+    if country:
+        exact = [p for p in matching if p.get("country") == country]
+        if exact:
+            return exact[0]
+    return matching[0]
+
+
+def money(price: dict[str, Any] | None, *, effective: bool = True) -> float:
     """A commercetools money value as a decimal amount.
 
     ``fractionDigits`` is respected rather than assumed to be two, so a zero-decimal
-    currency does not come out a hundred times high. A ``discounted`` price wins over the
-    list price: an active Product Discount is what the customer actually pays, and 62 of
-    this project's 159 products have one, so reading ``value`` alone misquotes more than a
-    third of the catalogue.
+    currency does not come out a hundred times high.
+
+    ``effective`` decides which number this is, and the two callers want different ones.
+    A shopper is quoted what they will pay, so an active Product Discount wins over the
+    list price -- 62 of this project's 159 products have one, and reading ``value`` alone
+    misquotes more than a third of the catalogue. An **operator editing the catalogue** is
+    working on the list price; the discount is a separate promotion they did not open. Show
+    a merchant the discounted figure and the number they reprice from disagrees with the
+    number the movement cap is checked against, which is how a 5% increase gets recorded
+    against the wrong base.
     """
     if not price:
         return 0.0
-    discounted = (price.get("discounted") or {}).get("value")
+    discounted = (price.get("discounted") or {}).get("value") if effective else None
     value = discounted or price.get("value") or price
     cents = value.get("centAmount")
     if cents is None:
@@ -218,6 +268,7 @@ def dedupe_variants(
     variants: list[dict[str, Any]],
     options: dict[str, list[str]],
     locale: str,
+    currency: str = "USD",
 ) -> list[dict[str, Any]]:
     """One variant per distinct combination of option values, cheapest in-stock first.
 
@@ -233,7 +284,7 @@ def dedupe_variants(
         return variants
 
     def sort_key(variant: dict[str, Any]) -> tuple[int, float]:
-        price = money(variant.get("price") or (variant.get("prices") or [{}])[0])
+        price = money(select_price(variant, currency))
         return (0 if _variant_stock(variant) else 1, price or float("inf"))
 
     chosen: dict[tuple[str, ...], dict[str, Any]] = {}
@@ -304,7 +355,7 @@ def _base_fields(
     locale: str,
     default_currency: str,
 ) -> dict[str, Any]:
-    price = variant.get("price") or (variant.get("prices") or [{}])[0]
+    price = select_price(variant, default_currency) or {}
     # The pre-discount price is deliberately NOT put in ``attributes``: those render as
     # bare value chips with no key, so a lone "299.00" beside a "$254.15" price reads as
     # nonsense on the tile and is just as ambiguous in the model's fenced data. The "sale"
@@ -337,11 +388,11 @@ def to_product(
     variants = [master, *(projection.get("variants") or [])]
     options = derive_options(variants, attribute_types, locale)
     if options:
-        listed = dedupe_variants(projection, variants, options, locale)
+        listed = dedupe_variants(projection, variants, options, locale, default_currency)
         in_stock = [v for v in listed if _variant_stock(v)]
         cheapest = min(
             in_stock or listed,
-            key=lambda v: money(v.get("price") or (v.get("prices") or [{}])[0]) or float("inf"),
+            key=lambda v: money(select_price(v, default_currency)) or float("inf"),
         )
         fields = _base_fields(projection, cheapest, locale, default_currency)
         # A family is in stock while any variant is, whatever the cheapest one says.
@@ -422,7 +473,7 @@ def to_product_details(
             **_base_fields(projection, chosen, locale, default_currency),
         )
     family = to_product(projection, attribute_types, locale, default_currency, category_name)
-    listed = dedupe_variants(projection, variants, options, locale)
+    listed = dedupe_variants(projection, variants, options, locale, default_currency)
     return ProductDetails(
         **family.model_dump(),
         long_description=long_description,

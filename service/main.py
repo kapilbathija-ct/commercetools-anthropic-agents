@@ -24,6 +24,8 @@ import anthropic
 from commerce_common.memory import InMemoryMemoryStore, MemoryWriteRejected
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
+from merchant_agent import MerchantSessionState
+from merchant_agent_runtime import MerchantAgent
 from pydantic import BaseModel, Field
 from shopping_agent import PageContext, ShoppingSessionState, StorefrontBackend
 from shopping_agent.fencing import STOREFRONT_FENCE
@@ -32,6 +34,11 @@ from shopping_agent_runtime import ShoppingAgent
 
 from ct_common import CTClient, ReferenceCache, load_settings
 from ct_common.checkout import CheckoutSessions
+from ct_merchant import (
+    CommercetoolsMerchant,
+    CTMerchantToolExecutor,
+    build_merchant_config,
+)
 from ct_shopping import (
     CommercetoolsStorefront,
     CTShoppingSession,
@@ -42,6 +49,7 @@ from ct_shopping import (
 from .checkout import install_checkout_routes
 from .host import append_user_turn, build_app, load_demo_env, stream_turn
 from .memory import MemoryFactEdit, install_memory_routes
+from .merchant import build_merchant_router
 from .redis_sessions import build_session_store
 from .sessions import session_dependency
 
@@ -93,6 +101,34 @@ def create_app(
         current=current_session,
         context=context,
     )
+
+    # The merchant half, in the same process so an approved change shows in the shop at
+    # once. Its own session store and state type: an operator session is not a shopper's.
+    if ct_client is not None:
+        merchant_config = build_merchant_config()
+        merchant_backend = CommercetoolsMerchant(ct_client, config=merchant_config)
+        merchant_agent = MerchantAgent(
+            backend=merchant_backend,
+            skills_dir=ROOT / "ct_merchant" / "skills",
+            config=merchant_config,
+            client=model_client or anthropic.AsyncAnthropic(),
+            memory_store=InMemoryMemoryStore(),
+            executor_class=CTMerchantToolExecutor,
+        )
+        merchant_sessions = build_session_store(MerchantSessionState, store_url)
+        app.include_router(
+            build_merchant_router(
+                backend=merchant_backend,
+                agent=merchant_agent,
+                sessions=merchant_sessions,
+                executor_class=CTMerchantToolExecutor,
+                merchant_id=settings.project_key,
+                operator=os.environ.get("MERCHANT_OPERATOR", "operator@acme.test"),
+                env_hint=str(ROOT / ".env"),
+            )
+        )
+        app.state.merchant_sessions = merchant_sessions
+        app.state.merchant_backend = merchant_backend
     app.state.ct_client = ct_client
     app.state.sessions = sessions
     return app
