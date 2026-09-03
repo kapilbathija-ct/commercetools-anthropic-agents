@@ -9,3 +9,6 @@ node_modules/
 .next/
 .DS_Store
 *.log
+test-results/
+playwright-report/
+.playwright/

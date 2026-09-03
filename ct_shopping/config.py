@@ -13,11 +13,15 @@ from shopping_agent import ShoppingAgentConfig
 # Derived from the live Product Types, and the only option names the catalogue's families
 # actually vary on: color, finish, size and diameter-in-inches.
 DOMAIN_SEARCH_NOTES = (
-    "This catalogue is home furnishings, lighting and tableware. Useful filter attributes "
-    "are size, color, finish and diameter-in-inches; pass them in filters.attributes with "
-    "the shopper's own words. Most products are sold as a single record; a minority are "
-    "families that vary by color, finish or size, and those need a variant id from the "
-    "product's details before the cart will take them."
+    "This catalogue is home furnishings, lighting, bedding and tableware. Search matches "
+    "the product name loosely, so name the specific item ('wine glass', 'area rug', "
+    "'nightstand') rather than a category word ('glassware', 'drinkware') and expect a few "
+    "unrelated results in any list. Express a budget as max_price rather than asking for "
+    "the cheapest in words: the price range is applied across the whole catalogue, while "
+    "sorting only orders the results already found. Useful filter attributes are size, "
+    "color, finish and diameter-in-inches. Most products are sold as a single record; a "
+    "minority are families that vary by color, finish or size, and those need a variant id "
+    "from the product's details before the cart will take them."
 )
 
 

@@ -21,6 +21,7 @@ fragment SearchVariant on ProductSearchVariant {
   sku
   price(currency: $currency, country: $country) {
     value { centAmount currencyCode fractionDigits }
+    discounted { value { centAmount currencyCode fractionDigits } }
   }
   images { url }
   availability { noChannel { availableQuantity isOnStock } }
@@ -35,6 +36,7 @@ fragment CatalogVariant on ProductVariant {
   sku
   price(currency: $currency, country: $country) {
     value { centAmount currencyCode fractionDigits }
+    discounted { value { centAmount currencyCode fractionDigits } }
   }
   images { url }
   availability { noChannel { availableQuantity isOnStock } }
@@ -56,7 +58,7 @@ query Search(
     total
     results {
       id
-      name(locale: $locale)
+      nameAllLocales { locale value }
       description(locale: $locale)
       categories { name(locale: $locale) }
       masterVariant { ...SearchVariant }
@@ -81,9 +83,12 @@ fragment OrderFields on Order {
   lineItems {
     productId
     quantity
-    name(locale: $locale)
+    nameAllLocales { locale value }
     variant { id sku }
-    price { value { centAmount currencyCode fractionDigits } }
+    price {
+      value { centAmount currencyCode fractionDigits }
+      discounted { value { centAmount currencyCode fractionDigits } }
+    }
   }
   shippingInfo { shippingMethodName }
 }
@@ -94,7 +99,7 @@ fragment OrderFields on Order {
 # mapper for an order is how an order-history page ends up quoting the wrong number.
 ORDERS_QUERY = (
     """
-query Orders($where: String!, $limit: Int!, $locale: Locale!) {
+query Orders($where: String!, $limit: Int!) {
   orders(where: $where, limit: $limit, sort: "createdAt desc") {
     results { ...OrderFields }
   }
@@ -105,7 +110,7 @@ query Orders($where: String!, $limit: Int!, $locale: Locale!) {
 
 ORDER_QUERY = (
     """
-query OneOrder($where: String!, $locale: Locale!) {
+query OneOrder($where: String!) {
   orders(where: $where, limit: 1) { results { ...OrderFields } }
 }
 """
@@ -120,7 +125,7 @@ query OneProduct($id: String!, $locale: Locale!, $currency: Currency!, $country:
     id
     masterData {
       current {
-        name(locale: $locale)
+        nameAllLocales { locale value }
         description(locale: $locale)
         categories { name(locale: $locale) }
         masterVariant { ...CatalogVariant }
@@ -143,9 +148,12 @@ fragment CartFields on Cart {
     id
     productId
     quantity
-    name(locale: $locale)
+    nameAllLocales { locale value }
     variant { id sku images { url } attributesRaw { name value } }
-    price { value { centAmount currencyCode fractionDigits } }
+    price {
+      value { centAmount currencyCode fractionDigits }
+      discounted { value { centAmount currencyCode fractionDigits } }
+    }
     totalPrice { centAmount currencyCode fractionDigits }
   }
 }
@@ -153,7 +161,7 @@ fragment CartFields on Cart {
 
 FIND_CART_QUERY = (
     """
-query FindCart($where: String!, $locale: Locale!) {
+query FindCart($where: String!) {
   carts(where: $where, limit: 1, sort: "lastModifiedAt desc") {
     results { ...CartFields }
   }
@@ -162,9 +170,36 @@ query FindCart($where: String!, $locale: Locale!) {
     + _CART_FIELDS
 )
 
+# ``productProjectionSearch`` rejects ``locale`` unless ``text`` is there too ("Both text
+# and locale arguments need to be present for a textual search"), so browsing the shelf
+# needs its own document: no search arguments at all, while the field selection still
+# resolves names and prices for the session's locale and currency.
+BROWSE_QUERY = (
+    """
+query Browse($locale: Locale!, $currency: Currency!, $country: Country!, $limit: Int!) {
+  productProjectionSearch(
+    staged: false, limit: $limit
+    priceSelector: { currency: $currency, country: $country }
+  ) {
+    total
+    results {
+      id
+      nameAllLocales { locale value }
+      description(locale: $locale)
+      categories { name(locale: $locale) }
+      masterVariant { ...SearchVariant }
+      variants { ...SearchVariant }
+    }
+  }
+}
+"""
+    + _VARIANT_FRAGMENT
+)
+
+
 CART_BY_ID_QUERY = (
     """
-query CartById($id: String!, $locale: Locale!) {
+query CartById($id: String!) {
   cart(id: $id) { ...CartFields }
 }
 """

@@ -79,7 +79,69 @@ where it generalizes, and anything specific to this project into this file.
 - **Domain errors mapped in the executor**: a frozen cart (a checkout still open) and a
   guest reaching a customer-only read. Both are ordinary states, not outages.
 - **`domain_search_notes`** names only `size`, `color`, `finish` and `diameter-in-inches`,
-  the option names the catalogue's families actually vary on.
+  the option names the catalogue's families actually vary on, and tells the model to name a
+  specific item rather than a category word.
+- **Sorting happens over the relevance head, not the whole match set.** commercetools text
+  search is loose -- "wine glass" matches 22 products here, candles and bowls among them --
+  so handing `sorts: ["price asc"]` to the platform answers "cheapest wine glass" with a
+  $1.99 bottle opener. The fetch window is deliberately small (`limit * 2`, capped at 16)
+  and the sort runs locally within it. A **price range is the exception** and is pushed down
+  as a platform filter, where it applies across the catalogue.
+- **Prices are the discounted ones.** 62 of 159 products carry an applied Product Discount,
+  so `price.discounted.value` wins over `price.value`; reading the list price misquotes more
+  than a third of the catalogue. `labels` carries `sale` and `new`, derived from the applied
+  discount and the `new-arrival` attribute.
+- **Names are read from `nameAllLocales`, not `name(locale:)`.** Asked for one locale,
+  GraphQL returns null when a product has no value for exactly that key, and two products
+  here are named under `en` rather than `en-US` -- they rendered with no title at all.
+
+### Checkout and payment
+
+Real commercetools Checkout in `PaymentOnly` mode, over the already-deployed
+`stripe-payment-connector`. The agent never touches any of it: its `checkout` tool renders
+the cart and returns a handoff URL, and `service/checkout.py` is the host's own flow, driven
+by the customer in the UI.
+
+- **Checkout Application** `demo-commercetools-checkout-taxes` (`PaymentOnly`, Active), with
+  its **Payment Integration** `Credit Card (Stripe)` at `componentType: DropIn` /
+  `type: embedded` -- the only combination this connector's enabler accepts, and
+  `componentType` cannot be changed after creation.
+- **Sessions API** lives on its own host (`session.{region}.commercetools.com`) and needs a
+  token with `manage_sessions`. That is a **separate grant from `manage_project`**, and an
+  API client's scopes cannot be edited after creation, so this project runs on its own
+  client (`commerce-agent-service`) created with both.
+- **`allowedOrigins`** on the Application had to include this storefront's origin
+  (`http://localhost:3005`, added with `addAllowedOrigin`); without it the widget will not
+  load.
+- **Sequence, in the order the platform requires:** address on the cart (order creation
+  fails outright with `Shipping address is not set.`), then a shipping method, then the
+  session -- created as late as possible, since sessions expire -- then the widget. Checkout
+  creates the Payment and the Order itself; there is no place-order call here.
+- **A Frozen cart is rejected outright** (`CartInvalidStateError`), so the cart is unfrozen
+  first if a previous attempt left it that way. `unfreezeCart` is not idempotent, so the
+  state is checked before the call rather than treating it as a no-op.
+- **`paymentFlow` does not navigate on success.** `skipPaymentSuccessPage` and
+  `skipPaymentErrorPage` default to true in `PaymentOnly` mode, so without the
+  `checkout_completed` handler the card is charged and the order created while the UI shows
+  nothing at all. `app/checkout/PaymentStep.tsx` navigates from that message.
+- **`order.paymentState` is unset even after a successful charge** -- verified live on an
+  order carrying both an Authorization Success and a Charge Success for the full gross
+  amount. `payment_state_for_order` derives it from the Payment's transactions instead;
+  reporting the raw field shows a paid order as unpaid.
+- **The connector's processor scales to zero** and Checkout's backend calls it a few seconds
+  after the session is created, so it is warmed (fire and forget) when a session is made. A
+  cold processor presents as a generic "Payment failed".
+- **The confirmation is scoped to the session's own principal.** Reading an order off a URL
+  id with no ownership check is an IDOR; `e2e/storefront.spec.ts` asserts a foreign order id
+  is refused.
+- The Application's `paymentReturnUrl` still points at the other storefront's origin. That
+  only matters for redirect-based methods that leave the page; inline card payment does not
+  use it. Left alone rather than repointed, since the Application is shared.
+
+Verified live end to end, four consecutive runs: a chat turn fills the cart, the checkout
+route takes a real Stripe test card, and each run produced a commercetools Order with a
+`Charge`/`Success` transaction matched to a Stripe PaymentIntent with `status: succeeded`
+and `amount_received: 3886` in test mode.
 
 ### Merchant agent
 
@@ -124,12 +186,33 @@ ruff check . && ruff format --check . && pytest      # no network
 python scripts/check_extensions.py                   # cart writes are unblocked
 python scripts/probe_backend.py                      # every backend method, live
 python scripts/smoke_chat.py                         # one live conversation, needs both keys
+
+cd web && npm run build                              # the storefront type-checks and builds
+cd web/storefront && npx playwright test             # the browser suite; checkout.spec.ts
+                                                     # takes a real Stripe test card and
+                                                     # creates a real Order on each run
 ```
+
+## The storefront
+
+`web/` is an npm workspace: `web-shared` (copied from the reference) and `storefront`, a
+Next.js app on port 3005. `lib/session.ts` persists the session id in `localStorage`, which
+the reference's own `useSession` does not do -- it starts a fresh session per mount, and a
+new session means a new anonymous id and therefore a different cart, so `/checkout` would
+arrive empty. The catalogue routes are public and write no provenance; the only
+add-to-cart path in the app runs off the agent's own product cards, through the same
+executor as the agent's tool call, so the provenance gate and quantity caps hold for a
+click exactly as they do for the model.
+
+`e2e/` holds the Playwright suite. The Stripe card fields are in a cross-origin iframe:
+page-context JS cannot reach them, but `frameLocator` drives them over CDP. Target the
+visible label text (`Card number`, `Security code`), not the placeholders, which are
+unrelated example content.
 
 ## What is left
 
 - `ct_merchant/`: the `MerchantBackend`, its config and the approval surface.
-- The web apps: a storefront and a merchant portal from `examples/retail/*-web` over a copy
-  of `examples/web-shared/`.
+- The merchant portal web app, from `examples/retail/merchant-web`.
 - Wire the real principal into `POST /api/session` (marked TODO in `service/main.py`).
 - Set `REDIS_URL` before running more than one worker.
+- Repoint `NEXT_PUBLIC_API_URL` and the Checkout Application origin for any deployed host.

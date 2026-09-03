@@ -66,6 +66,36 @@ def parse_ref(reference: str) -> tuple[str, int | None]:
     return product_id, int(variant) if variant.isdigit() else None
 
 
+def all_locales(
+    entries: Any, locale: str, fallbacks: tuple[str, ...] = ("en-US", "en-GB", "en")
+) -> str:
+    """A GraphQL ``*AllLocales`` list as one display string.
+
+    Asked for a single locale, commercetools GraphQL returns null when the product has no
+    value for exactly that key -- and this project holds products named under ``en``
+    rather than ``en-US``, which rendered with no title at all. Preferring the session's
+    locale, then the fallbacks, then whatever exists means a product always has a name.
+    """
+    if not entries:
+        return ""
+    if isinstance(entries, str):
+        return entries
+    by_locale = {
+        entry.get("locale"): entry.get("value")
+        for entry in entries
+        if isinstance(entry, dict) and entry.get("value")
+    }
+    for candidate in (locale, *fallbacks):
+        if by_locale.get(candidate):
+            return str(by_locale[candidate])
+    # A language match before giving up: "en-GB" satisfies a request for "en".
+    language = locale.split("-")[0]
+    for key, value in by_locale.items():
+        if key and key.split("-")[0] == language:
+            return str(value)
+    return str(next(iter(by_locale.values()), ""))
+
+
 def localized(value: Any, locale: str, fallbacks: tuple[str, ...] = ("en-US", "en-GB")) -> str:
     """A LocalizedString, a set of them, or a plain scalar, as one display string."""
     if value is None:
@@ -85,16 +115,34 @@ def localized(value: Any, locale: str, fallbacks: tuple[str, ...] = ("en-US", "e
 
 
 def money(price: dict[str, Any] | None) -> float:
-    """A commercetools money value as a decimal amount. ``fractionDigits`` is respected
-    rather than assuming two, so a zero-decimal currency does not come out 100x high."""
+    """A commercetools money value as a decimal amount.
+
+    ``fractionDigits`` is respected rather than assumed to be two, so a zero-decimal
+    currency does not come out a hundred times high. A ``discounted`` price wins over the
+    list price: an active Product Discount is what the customer actually pays, and 62 of
+    this project's 159 products have one, so reading ``value`` alone misquotes more than a
+    third of the catalogue.
+    """
     if not price:
         return 0.0
-    value = price.get("value") or price
+    discounted = (price.get("discounted") or {}).get("value")
+    value = discounted or price.get("value") or price
     cents = value.get("centAmount")
     if cents is None:
         return 0.0
     digits = value.get("fractionDigits", 2)
     return round(cents / (10**digits), 2)
+
+
+def list_price(price: dict[str, Any] | None) -> float | None:
+    """The pre-discount price, or None when nothing is discounted."""
+    if not price or not (price.get("discounted") or {}).get("value"):
+        return None
+    value = price.get("value")
+    if not value:
+        return None
+    digits = value.get("fractionDigits", 2)
+    return round(value["centAmount"] / (10**digits), 2)
 
 
 def currency_of(price: dict[str, Any] | None, default: str) -> str:
@@ -105,11 +153,23 @@ def currency_of(price: dict[str, Any] | None, default: str) -> str:
 
 
 def swatch_label(value: str) -> str:
-    """``"Light Pink:#FFB6C1"`` renders as ``Light Pink``. This catalogue appends a hex
-    code to colour and finish values; the shopper never needs to read it and the model
-    should not repeat it back."""
-    if ":" in value and value.rsplit(":", 1)[1].strip().startswith("#"):
-        return value.rsplit(":", 1)[0].strip()
+    """``"Light Pink:#FFB6C1"`` renders as ``Light Pink``.
+
+    This catalogue appends a swatch to colour and finish values, usually a hex code but
+    sometimes the colour word again (``"Transparent:transparent"``). Neither is worth
+    showing a shopper or letting the model repeat back. A colon that is neither -- as in
+    ``"Set: two chairs"`` -- is left alone.
+    """
+    if ":" not in value:
+        return value
+    head, _, tail = value.rpartition(":")
+    head, tail = head.strip(), tail.strip()
+    if not head:
+        return value
+    if tail.startswith("#") or tail.lower() == head.lower().replace(" ", ""):
+        return head
+    if tail.lower() == head.lower():
+        return head
     return value
 
 
@@ -221,6 +281,23 @@ def _variant_attributes(variant: dict[str, Any], locale: str) -> dict[str, str]:
     return out
 
 
+def _labels(
+    projection: dict[str, Any], variant: dict[str, Any], price: dict[str, Any]
+) -> list[str]:
+    """Merchandising signals the storefront reads, each derived from a real platform fact:
+    an applied Product Discount, and the catalogue's own new-arrival flag."""
+    labels = []
+    if (price.get("discounted") or {}).get("value"):
+        labels.append("sale")
+    attributes = _attribute_map(variant)
+    if attributes.get("new-arrival") is True or any(
+        (category.get("name") or "") == "New Arrivals"
+        for category in projection.get("categories") or []
+    ):
+        labels.append("new")
+    return labels
+
+
 def _base_fields(
     projection: dict[str, Any],
     variant: dict[str, Any],
@@ -228,14 +305,20 @@ def _base_fields(
     default_currency: str,
 ) -> dict[str, Any]:
     price = variant.get("price") or (variant.get("prices") or [{}])[0]
+    # The pre-discount price is deliberately NOT put in ``attributes``: those render as
+    # bare value chips with no key, so a lone "299.00" beside a "$254.15" price reads as
+    # nonsense on the tile and is just as ambiguous in the model's fenced data. The "sale"
+    # label carries the fact; a before-and-after price belongs in a presentation extension.
+    attributes = _variant_attributes(variant, locale)
     return {
-        "title": localized(projection.get("name"), locale),
+        "title": all_locales(projection.get("nameAllLocales") or projection.get("name"), locale),
         "price": money(price),
         "currency": currency_of(price, default_currency),
         "image_url": _image_url(variant) or _image_url(projection.get("masterVariant") or {}),
         "in_stock": _variant_stock(variant),
         "short_description": localized(projection.get("description"), locale)[:300] or None,
-        "attributes": _variant_attributes(variant, locale),
+        "attributes": attributes,
+        "labels": _labels(projection, variant, price),
     }
 
 

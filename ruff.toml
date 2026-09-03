@@ -11,3 +11,4 @@ quote-style = "double"
 # Copied verbatim from the reference host so it stays diffable against upstream.
 "service/sessions.py" = ["E501"]
 "service/host.py" = ["E501", "I001"]
+"service/memory.py" = ["E501", "I001"]

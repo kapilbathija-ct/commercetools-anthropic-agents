@@ -162,3 +162,66 @@ def test_variant_details_resolve_to_that_variant():
     assert details.price == 49.99
     assert details.option_values == {"color": "Golden Rod"}
     assert details.variant_of == "11111111-2222-3333-4444-555555555555"
+
+
+def discounted_variant(vid: int, cents: int, discounted_cents: int, **attributes: object) -> dict:
+    v = variant(vid, cents, **attributes)
+    v["price"]["discounted"] = {
+        "value": {
+            "centAmount": discounted_cents,
+            "currencyCode": "USD",
+            "fractionDigits": 2,
+        }
+    }
+    return v
+
+
+def test_an_applied_product_discount_is_the_price_quoted():
+    """62 of this project's 159 products carry a discounted price. Reading the list price
+    would have the agent misquote more than a third of the catalogue."""
+    product = to_product(projection(discounted_variant(1, 129900, 110415)), TYPES, "en-US", "USD")
+    assert product.price == 1104.15
+    assert "sale" in product.labels
+    # The pre-discount price is not smuggled into attributes: they render as keyless chips.
+    assert "was" not in product.attributes
+
+
+def test_no_discount_means_no_sale_label_and_no_was_line():
+    product = to_product(projection(variant(1, 2999)), TYPES, "en-US", "USD")
+    assert product.price == 29.99
+    assert product.labels == []
+
+
+def test_new_arrival_flag_and_category_both_label_new():
+    by_flag = to_product(
+        projection(variant(1, 100, **{"new-arrival": True})), TYPES, "en-US", "USD"
+    )
+    assert "new" in by_flag.labels
+    with_category = projection(variant(1, 100))
+    with_category["categories"] = [{"name": "New Arrivals"}]
+    assert "new" in to_product(with_category, TYPES, "en-US", "USD").labels
+
+
+def test_a_familys_from_price_is_the_cheapest_effective_price():
+    """The lowest in-stock variant's price after its own discount, not before it."""
+    product = to_product(
+        projection(
+            variant(1, 15000, color="White:#fff"),
+            discounted_variant(2, 14000, 9000, color="Golden Rod:#daa"),
+        ),
+        TYPES,
+        "en-US",
+        "USD",
+    )
+    assert product.options == {"color": ["White", "Golden Rod"]}
+    assert product.price == 90.0
+
+
+def test_swatch_label_handles_this_catalogues_three_shapes():
+    assert swatch_label("Light Pink:#FFB6C1") == "Light Pink"
+    # The suffix is sometimes the colour word again rather than a hex code.
+    assert swatch_label("Transparent:transparent") == "Transparent"
+    assert swatch_label("Lightslate Gray:lightslategray") == "Lightslate Gray"
+    # A colon that is neither a swatch nor a repeat is left alone.
+    assert swatch_label("Set: two chairs") == "Set: two chairs"
+    assert swatch_label("Gold") == "Gold"

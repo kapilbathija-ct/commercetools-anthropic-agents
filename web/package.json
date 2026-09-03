@@ -1,0 +1,9 @@
+{
+  "name": "commercetools-anthropic-agents-web",
+  "private": true,
+  "workspaces": ["web-shared", "storefront"],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm run dev --workspace storefront"
+  }
+}

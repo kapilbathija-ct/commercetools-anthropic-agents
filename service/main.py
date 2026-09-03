@@ -21,15 +21,17 @@ from pathlib import Path
 from typing import Any
 
 import anthropic
-from commerce_common.memory import InMemoryMemoryStore
-from fastapi import FastAPI
+from commerce_common.memory import InMemoryMemoryStore, MemoryWriteRejected
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from shopping_agent import PageContext, ShoppingSessionState, StorefrontBackend
+from shopping_agent.fencing import STOREFRONT_FENCE
 from shopping_agent.serialization import cart_payload
 from shopping_agent_runtime import ShoppingAgent
 
 from ct_common import CTClient, ReferenceCache, load_settings
+from ct_common.checkout import CheckoutSessions
 from ct_shopping import (
     CommercetoolsStorefront,
     CTShoppingSession,
@@ -37,7 +39,9 @@ from ct_shopping import (
     build_shopping_config,
 )
 
+from .checkout import install_checkout_routes
 from .host import append_user_turn, build_app, load_demo_env, stream_turn
+from .memory import MemoryFactEdit, install_memory_routes
 from .redis_sessions import build_session_store
 from .sessions import session_dependency
 
@@ -77,6 +81,18 @@ def create_app(
     current_session = session_dependency(sessions, "/api/session")
     app = build_app(title="commercetools shopping agent")
     register_routes(app, agent=agent, backend=backend, sessions=sessions, current=current_session)
+    checkout = CheckoutSessions(
+        settings,
+        application_key=os.environ.get("CTP_CHECKOUT_APP_KEY", ""),
+        processor_url=os.environ.get("CTP_CHECKOUT_PROCESSOR_URL") or None,
+    )
+    install_checkout_routes(
+        app,
+        backend=backend,
+        sessions=checkout,
+        current=current_session,
+        context=context,
+    )
     app.state.ct_client = ct_client
     app.state.sessions = sessions
     return app
@@ -86,6 +102,11 @@ class StartSessionRequest(BaseModel):
     # The customer id the caller's own authentication resolved. Absent means a guest, and
     # the session is then known to commercetools by an anonymous id of its own.
     customer_id: str | None = Field(default=None, max_length=128)
+
+
+class CartAddRequest(BaseModel):
+    product_id: str = Field(min_length=1, max_length=256)
+    quantity: int = Field(default=1, ge=1, le=99)
 
 
 class ChatRequest(BaseModel):
@@ -103,6 +124,13 @@ def is_guest_principal(user_id: str) -> bool:
     in ``anonymousId`` instead -- and a cart created with the wrong one silently ends up
     with neither field set."""
     return user_id.startswith(GUEST_PREFIX)
+
+
+def catalog_session() -> CTShoppingSession:
+    """A public catalogue read still needs a session object for the backend contract, but
+    it identifies nobody: the catalogue does not vary by shopper here, and a cart write is
+    impossible without a real session id."""
+    return CTShoppingSession(session_id="catalog", user_id=f"{GUEST_PREFIX}catalog", is_guest=True)
 
 
 def context(record: Any, page: PageContext | None = None) -> CTShoppingSession:
@@ -149,6 +177,91 @@ def register_routes(app: FastAPI, *, agent: Any, backend: Any, sessions: Any, cu
     async def reset(record: CurrentSession) -> dict:
         sessions.reset(record)
         return {"ok": True}
+
+    # The catalogue is public, as a storefront's own product pages are: these routes carry
+    # no session and write no provenance. Provenance is what the *agent* read this session,
+    # and the only direct add-to-cart path in the app runs off the agent's own product
+    # cards, so nothing here needs to enter it. A route with no authenticated session must
+    # not be able to widen what the model is later allowed to write.
+    @app.get("/api/products")
+    async def list_products(limit: int = 60) -> dict:
+        products = await backend.browse_products(catalog_session(), limit=limit)
+        return {"products": [product.model_dump(mode="json") for product in products]}
+
+    @app.get("/api/products/{product_id:path}")
+    async def get_product(product_id: str) -> dict:
+        product = await backend.get_product_details(catalog_session(), product_id)
+        if product is None:
+            raise HTTPException(status_code=404, detail="Product not found")
+        return product.model_dump(mode="json")
+
+    @app.post("/api/cart/add")
+    async def cart_add(request: CartAddRequest, record: CurrentSession) -> dict:
+        """The tile's Add button, run through the same executor as the agent's
+        ``add_to_cart`` so the provenance gate and the quantity caps hold for a click
+        exactly as they do for a tool call."""
+        executor = agent.executor_class(
+            backend=backend,
+            config=agent.config,
+            skills=agent.skills,
+            session=context(record),
+            state=record.state,
+            memory=agent.memory,
+        )
+        execution = await executor.execute(
+            "add_to_cart", {"product_id": request.product_id, "quantity": request.quantity}
+        )
+        if execution.blocked or execution.is_error:
+            raise HTTPException(status_code=400, detail=execution.result_text.split(". ")[0] + ".")
+        product = record.state.seen_products.get(request.product_id)
+        if product is None:
+            raise HTTPException(status_code=400, detail="Product not in this session's results")
+        # The next turn is told what happened outside the conversation. The title is
+        # catalogue-authored text entering model context unfenced, so it is sanitized.
+        record.pending_app_events.append(
+            f"Customer tapped Add to cart on "
+            f"{STOREFRONT_FENCE.sanitize_text(product.title, max_chars=120)} "
+            f"({product.product_id}), quantity {request.quantity}."
+        )
+        cart = next(
+            (event.data.get("cart") for event in execution.events if event.type == "cart_update"),
+            None,
+        )
+        return {"ok": True, "cart": cart}
+
+    @app.get("/api/orders")
+    async def list_orders(record: CurrentSession) -> dict:
+        session = context(record)
+        if session.is_guest:
+            # A guest has no order history; the storefront shows the empty state rather
+            # than an error.
+            return {"orders": [], "guest": True}
+        orders = await backend.get_orders(session, limit=20)
+        return {"orders": [order.model_dump(mode="json") for order in orders]}
+
+    install_memory_routes(
+        app, "/api/memory", current_session=CurrentSession, memory_store=agent.memory.store
+    )
+
+    @app.patch("/api/memory")
+    async def edit_memory_fact(edit: MemoryFactEdit, record: CurrentSession) -> dict:
+        store = agent.memory.store
+        existing = {fact.key: fact for fact in await store.get_facts(record.user_id)}
+        if edit.key not in existing:
+            raise HTTPException(status_code=404, detail="No such fact")
+        try:
+            corrected = agent.memory.validate(
+                edit.key,
+                edit.value,
+                existing[edit.key].category.value,
+                source_session_id=existing[edit.key].source_session_id,
+            )
+        except MemoryWriteRejected as rejected:
+            raise HTTPException(status_code=400, detail=str(rejected)) from None
+        if not corrected.value:
+            raise HTTPException(status_code=400, detail="Value must not be empty")
+        await store.upsert_facts(record.user_id, [corrected])
+        return {"ok": True, "fact": corrected.model_dump(mode="json")}
 
     @app.get("/api/health")
     async def health() -> dict:

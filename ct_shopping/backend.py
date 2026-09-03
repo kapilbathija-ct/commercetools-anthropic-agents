@@ -50,7 +50,7 @@ from shopping_agent import (
 from ct_common import CTClient, CTError, ReferenceCache, TaxCategoryMissing
 from ct_common import graphql as g
 from ct_common.mapping import (
-    localized,
+    all_locales,
     money,
     parse_ref,
     to_product,
@@ -149,14 +149,22 @@ class CommercetoolsStorefront(StorefrontBackend):
         filters: SearchFilters | None = None,
         limit: int = 8,
     ) -> list[Any]:
-        # Over-fetch so the attribute and price filters below still have candidates to keep.
-        fetch = min(max(limit * 4, limit), 40)
+        # A price range is pushed to the platform, where it applies to the whole match set
+        # rather than to whatever this call happened to fetch.
+        platform_filters = self._price_filter(filters)
+        # The over-fetch is deliberately tight. commercetools text search is loose -- "wine
+        # glass" matches 22 products here, candles and bowls among them -- so a wide window
+        # plus a price sort surfaces the cheapest *unrelated* thing (a $1.99 bottle opener)
+        # and buries the actual match. Sorting the relevance head is what a shopper asking
+        # for "the cheapest wine glass" means; sorting the whole loose match is not, which
+        # is also why `sorts` is not handed to the platform here.
+        fetch = min(max(limit * 2, limit), 16)
         data = await self._client.graphql(
             g.SEARCH_QUERY,
             {
                 "text": query or None,
                 "limit": fetch,
-                "filters": None,
+                "filters": platform_filters,
                 "sorts": None,
                 **self._locale_vars(),
             },
@@ -177,19 +185,41 @@ class CommercetoolsStorefront(StorefrontBackend):
             )
         return self._apply_filters(products, filters)[:limit]
 
+    @staticmethod
+    def _price_filter(filters: SearchFilters | None) -> list[dict[str, Any]] | None:
+        """``min_price``/``max_price`` as a platform range filter, in the currency's minor
+        units. Applied by commercetools across every match, not just the fetched page."""
+        if filters is None or (filters.min_price is None and filters.max_price is None):
+            return None
+        span: dict[str, str] = {}
+        if filters.min_price is not None:
+            span["from"] = str(int(round(filters.min_price * 100)))
+        if filters.max_price is not None:
+            span["to"] = str(int(round(filters.max_price * 100)))
+        return [
+            {
+                "model": {
+                    "range": {"path": "variants.price.centAmount", "ranges": [span]},
+                }
+            }
+        ]
+
     def _apply_filters(self, products: list[Any], filters: SearchFilters | None) -> list[Any]:
-        """Price, rating, category and attribute filters, applied here rather than by the
-        platform. A Product Search filter on an attribute whose definition has
-        ``isSearchable: false`` returns an empty result set and no error, which reads to
-        the model as "the store has none of those"."""
+        """Rating, category and attribute filters, and the sort.
+
+        These run here rather than at the platform for a specific reason: a Product Search
+        filter on an attribute whose definition has ``isSearchable: false`` returns an empty
+        result set and no error, which reads to the model as "the store has none of those",
+        and on this project ``color`` and ``finish`` -- the two a shopper is most likely to
+        name -- are both unsearchable. Category is matched here too because a product
+        carries several and only one becomes ``category``. The price range is the exception:
+        it is unambiguous, so it is pushed down (see ``_price_filter``)."""
         if filters is None:
             return products
         kept = []
         for product in products:
-            if filters.min_price is not None and product.price < filters.min_price:
-                continue
-            if filters.max_price is not None and product.price > filters.max_price:
-                continue
+            # The price range already ran at the platform; re-checking it here would drop a
+            # family whose "from" price sits outside the range while a variant sits inside.
             if filters.min_rating is not None and (product.rating or 0) < filters.min_rating:
                 continue
             if (
@@ -242,8 +272,7 @@ class CommercetoolsStorefront(StorefrontBackend):
 
     async def _find_cart(self, session: CTShoppingSession) -> dict[str, Any] | None:
         data = await self._client.graphql(
-            g.FIND_CART_QUERY,
-            {"where": session.cart_owner_predicate(), "locale": self._settings.locale},
+            g.FIND_CART_QUERY, {"where": session.cart_owner_predicate()}
         )
         results = (data.get("carts") or {}).get("results") or []
         return results[0] if results else None
@@ -269,9 +298,7 @@ class CommercetoolsStorefront(StorefrontBackend):
         return await self._cart_by_id(created["id"])
 
     async def _cart_by_id(self, cart_id: str) -> dict[str, Any]:
-        data = await self._client.graphql(
-            g.CART_BY_ID_QUERY, {"id": cart_id, "locale": self._settings.locale}
-        )
+        data = await self._client.graphql(g.CART_BY_ID_QUERY, {"id": cart_id})
         return data.get("cart") or {}
 
     def _to_cart(self, raw: dict[str, Any] | None) -> Cart:
@@ -287,7 +314,7 @@ class CommercetoolsStorefront(StorefrontBackend):
             items.append(
                 CartItem(
                     product_id=variant_ref(line["productId"], variant.get("id", 1)),
-                    title=localized(line.get("name"), self._settings.locale),
+                    title=all_locales(line.get("nameAllLocales"), self._settings.locale),
                     price=money(line.get("price")),
                     quantity=line.get("quantity", 1),
                     image_url=images[0]["url"] if images else None,
@@ -424,7 +451,7 @@ class CommercetoolsStorefront(StorefrontBackend):
         items = [
             OrderItem(
                 product_id=variant_ref(line["productId"], (line.get("variant") or {}).get("id", 1)),
-                title=localized(line.get("name"), self._settings.locale),
+                title=all_locales(line.get("nameAllLocales"), self._settings.locale),
                 quantity=line.get("quantity", 1),
                 price=money(line.get("price")),
             )
@@ -446,11 +473,7 @@ class CommercetoolsStorefront(StorefrontBackend):
             raise NotOffered("order history needs a signed-in customer")
         data = await self._client.graphql(
             g.ORDERS_QUERY,
-            {
-                "where": f'customerId="{session.user_id}"',
-                "limit": limit,
-                "locale": self._settings.locale,
-            },
+            {"where": f'customerId="{session.user_id}"', "limit": limit},
         )
         return [self._to_order(raw) for raw in (data.get("orders") or {}).get("results") or []]
 
@@ -467,9 +490,7 @@ class CommercetoolsStorefront(StorefrontBackend):
             clauses.append(f'id="{escaped}"')
         joined = " or ".join(clauses)
         where = f'customerId="{session.user_id}" and ({joined})'
-        data = await self._client.graphql(
-            g.ORDER_QUERY, {"where": where, "locale": self._settings.locale}
-        )
+        data = await self._client.graphql(g.ORDER_QUERY, {"where": where})
         results = (data.get("orders") or {}).get("results") or []
         return self._to_order(results[0]) if results else None
 
@@ -557,8 +578,154 @@ class CommercetoolsStorefront(StorefrontBackend):
                 fee = money(rate.get("price"))
                 free_above = rate.get("freeAbove")
                 if free_above:
-                    return fee, f"free over {money(free_above)}"
+                    return fee, f"free over {money(free_above):,.2f}"
                 if rate.get("tiers"):
                     return fee, "price varies with cart value"
                 return fee, None
         return 0.0, None
+
+    # -- Host reads (not part of StorefrontBackend) --------------------------------------
+
+    async def browse_products(self, session: CTShoppingSession, limit: int = 60) -> list[Any]:
+        """The catalogue for the storefront's own grid. Separate from ``search_products``
+        because that one is clamped to the model's result cap, while a page of tiles wants
+        the whole shelf."""
+        data = await self._client.graphql(
+            g.BROWSE_QUERY,
+            {"limit": max(1, min(limit, 100)), **self._locale_vars()},
+        )
+        results = (data.get("productProjectionSearch") or {}).get("results") or []
+        types = await self.attribute_types()
+        return [
+            to_product(
+                g.normalize_projection(raw),
+                types,
+                self._settings.locale,
+                self._settings.currency,
+                g.category_label(raw),
+            )
+            for raw in results
+        ]
+
+    # -- Checkout preparation (host only; no agent tool reaches these) -------------------
+
+    async def prepare_for_checkout(
+        self,
+        session: CTShoppingSession,
+        *,
+        address: dict[str, Any],
+        email: str | None = None,
+    ) -> dict[str, Any]:
+        """Put the address on the cart and make sure the cart is in a state Checkout will
+        accept. Returns the raw cart, for the routes that follow.
+
+        Order creation fails with ``Shipping address is not set.`` for a cart with shippable
+        line items, and Checkout rejects a Frozen cart outright, so both are settled here
+        before a session is created.
+        """
+        cart = await self._find_cart(session)
+        if not cart:
+            raise CTError("there is no cart to check out")
+        actions: list[dict[str, Any]] = [
+            {"action": "setShippingAddress", "address": address},
+            {"action": "setBillingAddress", "address": address},
+        ]
+        if email:
+            actions.append({"action": "setCustomerEmail", "email": email})
+        await self._unfreeze_if_frozen(cart)
+        return await self._update(cart, actions)
+
+    async def _unfreeze_if_frozen(self, cart: dict[str, Any]) -> None:
+        """``unfreezeCart`` is not idempotent: on an Active cart it fails with ``A cart with
+        state Active cannot be unfrozen``. So the state is checked first rather than
+        treating the call as a harmless no-op."""
+        if cart.get("cartState") != "Frozen":
+            return
+        await self._client.post(
+            f"/carts/{cart['id']}",
+            {"version": cart["version"], "actions": [{"action": "unfreezeCart"}]},
+        )
+
+    async def checkout_shipping_methods(self, session: CTShoppingSession) -> list[dict[str, Any]]:
+        """The methods that match this cart, once it has an address. Each carries the fee
+        the cart would actually pay, ``freeAbove`` and rate tiers included."""
+        cart = await self._find_cart(session)
+        if not cart:
+            return []
+        methods = await self._client.get_list(
+            "/shipping-methods/matching-cart", {"cartId": cart["id"]}
+        )
+        out = []
+        for method in methods:
+            fee, note = self._shipping_fee(method)
+            out.append(
+                {
+                    "id": method["id"],
+                    "name": method.get("name"),
+                    "description": method.get("description"),
+                    "fee": fee,
+                    "note": note,
+                }
+            )
+        return out
+
+    async def set_shipping_method(
+        self, session: CTShoppingSession, shipping_method_id: str
+    ) -> dict[str, Any]:
+        cart = await self._find_cart(session)
+        if not cart:
+            raise CTError("there is no cart to set a shipping method on")
+        return await self._update(
+            cart,
+            [
+                {
+                    "action": "setShippingMethod",
+                    "shippingMethod": {"typeId": "shipping-method", "id": shipping_method_id},
+                }
+            ],
+        )
+
+    async def cart_for_checkout(self, session: CTShoppingSession) -> dict[str, Any] | None:
+        """The raw cart, for the routes that need its id, version and state rather than the
+        agent's own record."""
+        return await self._find_cart(session)
+
+    async def payment_state_for_order(self, order: dict[str, Any]) -> str | None:
+        """Whether this order is paid, read from its Payment's transactions.
+
+        ``order.paymentState`` is **not** the answer: Checkout leaves it unset even after a
+        card has really been charged (verified live -- an order with an Authorization
+        Success and a Charge Success for the full gross amount still had
+        ``paymentState: null``). Reporting that field to the customer shows a paid order as
+        having no payment at all, so the transactions are what this reads.
+        """
+        payments = ((order.get("paymentInfo") or {}).get("payments")) or []
+        states: list[str] = []
+        for reference in payments:
+            payment = await self._client.get(f"/payments/{reference['id']}")
+            for transaction in payment.get("transactions") or []:
+                if transaction.get("state") != "Success":
+                    continue
+                if transaction.get("type") in ("Charge", "Authorization"):
+                    states.append(transaction["type"])
+        if "Charge" in states:
+            return "paid"
+        if "Authorization" in states:
+            return "authorized"
+        return order.get("paymentState")
+
+    async def order_for_session(
+        self, session: CTShoppingSession, order_id: str
+    ) -> dict[str, Any] | None:
+        """One order, scoped to this session's own principal, for the confirmation page.
+        Reading an order straight off a URL id with no ownership check is the IDOR this
+        project has already recorded once."""
+        field = "anonymousId" if session.is_guest else "customerId"
+        escaped = order_id.replace('"', "")
+        if not _is_uuid(escaped):
+            return None
+        payload = await self._client.get(
+            "/orders", {"where": f'id="{escaped}" and {field}="{session.user_id}"', "limit": 1}
+        )
+        results = payload.get("results") or []
+        return results[0] if results else None
