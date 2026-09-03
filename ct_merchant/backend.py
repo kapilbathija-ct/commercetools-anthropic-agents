@@ -342,10 +342,18 @@ class CommercetoolsMerchant(MerchantBackend):
                 return name
         return None
 
-    async def _stock_by_sku(self, skus: list[str]) -> dict[str, int]:
-        """Available quantity per sku. An absent entry means inventory is not tracked for
-        that sku, which commercetools treats as unlimited rather than zero -- so it is
-        reported as 0 here only for the operator's own alerting, never used to block a sale.
+    async def _inventory_by_sku(self, skus: list[str]) -> dict[str, dict[str, int]]:
+        """Per sku: what the shop can sell, and what sits in other channels.
+
+        A sku carries one InventoryEntry per supply channel, and this project has up to five
+        per sku with very different quantities. Which one matters depends on what the shop
+        draws on, and this storefront creates carts with **no** supply channel -- so the
+        channel-less entry is the sellable figure, and it is also the one the shopping
+        agent reads (``availability.noChannel``). Both agents therefore quote the same
+        number.
+
+        The other channels are not noise, though: 95 units in a warehouse is the reason not
+        to reorder. They are returned alongside so a restock proposal can say so.
         """
         if not skus:
             return {}
@@ -355,10 +363,26 @@ class CommercetoolsMerchant(MerchantBackend):
         payload = await self._client.get(
             "/inventory", {"where": f"sku in ({quoted})", "limit": 500}
         )
-        totals: Counter[str] = Counter()
+        out: dict[str, dict[str, int]] = {}
         for entry in payload.get("results") or []:
-            totals[entry["sku"]] += entry.get("availableQuantity") or 0
-        return dict(totals)
+            row = out.setdefault(entry["sku"], {"sellable": 0, "other_channels": 0, "seen": 0})
+            quantity = entry.get("availableQuantity") or 0
+            if entry.get("supplyChannel"):
+                row["other_channels"] += quantity
+            else:
+                row["sellable"] += quantity
+                row["seen"] = 1
+        # A sku with no channel-less entry at all: the shop has nothing of its own to draw
+        # on, so the channel total is the best available reading rather than a flat zero.
+        for row in out.values():
+            if not row["seen"]:
+                row["sellable"] = row["other_channels"]
+                row["other_channels"] = 0
+        return out
+
+    async def _stock_by_sku(self, skus: list[str]) -> dict[str, int]:
+        """The sellable quantity per sku."""
+        return {sku: row["sellable"] for sku, row in (await self._inventory_by_sku(skus)).items()}
 
     async def search_listings(
         self,
@@ -503,10 +527,20 @@ class CommercetoolsMerchant(MerchantBackend):
         kinds that can be computed are returned."""
 
         async def load() -> list[InventoryAlert]:
-            entries = await self._client.get(
+            # The query finds *candidate* skus: entries below the threshold. It cannot be
+            # the answer on its own, because a sku carries one entry per supply channel and
+            # this project's data has five per sku with very different quantities -- one
+            # channel holding 3 units of a sku with 146 in total. Aggregating only the
+            # matching entries flagged that sku as low at "3", which reads to the operator
+            # as a product to restock when it is fully stocked. So each candidate sku's
+            # total across every channel is read next, and only that total is judged.
+            candidates = await self._client.get(
                 "/inventory",
                 {"where": f"availableQuantity < {LOW_STOCK_THRESHOLD}", "limit": 100},
             )
+            skus = sorted({row["sku"] for row in candidates.get("results") or [] if row.get("sku")})
+            inventory = await self._inventory_by_sku(skus)
+
             sold: Counter[str] = Counter()
             for order in await self._orders_since(30):
                 for line in order.get("lineItems") or []:
@@ -515,9 +549,13 @@ class CommercetoolsMerchant(MerchantBackend):
                         sold[sku] += line.get("quantity") or 0
 
             alerts: list[InventoryAlert] = []
-            for entry in entries.get("results") or []:
-                sku = entry.get("sku")
-                units = entry.get("availableQuantity") or 0
+            for sku in skus:
+                row = inventory.get(sku) or {"sellable": 0, "other_channels": 0}
+                units = row["sellable"]
+                if units >= LOW_STOCK_THRESHOLD:
+                    # The shop has plenty of its own; a low entry in some other channel is
+                    # not something the operator needs to act on.
+                    continue
                 listing = await self._listing_for_sku(sku, units)
                 if listing is None:
                     continue
@@ -579,6 +617,17 @@ class CommercetoolsMerchant(MerchantBackend):
         if options:
             return await self._to_variant_listing(projection, variant, options, stock)
         return await self._to_listing(projection, types, stock)
+
+    async def _other_channel_stock(self, listing_id: str) -> int:
+        """Units of this listing held in supply channels the storefront does not sell from."""
+        product_id, variant_id = parse_ref(listing_id)
+        selected = await self._selected_variants(product_id)
+        variant = selected.get(variant_id or next(iter(selected), 1)) or {}
+        sku = variant.get("sku")
+        if not sku:
+            return 0
+        rows = await self._inventory_by_sku([sku])
+        return (rows.get(sku) or {}).get("other_channels", 0)
 
     async def get_order_issues(self, session: MerchantSessionContext) -> list[OrderIssue]:
         """Derived from payment and shipment state, the only exception signals
@@ -720,6 +769,7 @@ class CommercetoolsMerchant(MerchantBackend):
         note: str | None = None,
     ) -> StagedChange:
         change_items = []
+        notes: list[str] = []
         for item in items:
             listing = await self.get_listing(session, item.listing_id)
             if listing is None:
@@ -733,6 +783,14 @@ class CommercetoolsMerchant(MerchantBackend):
                         after=listing.stock + (item.quantity or 0),
                     )
                 )
+                elsewhere = await self._other_channel_stock(item.listing_id)
+                if elsewhere:
+                    # The operator should see this before approving: reordering when the
+                    # stock already exists a channel away is the wrong call.
+                    notes.append(
+                        f"{item.listing_id} has {elsewhere} unit(s) in other supply "
+                        "channels, which this storefront does not sell from"
+                    )
             else:
                 change_items.append(
                     ChangeItem(
@@ -748,6 +806,7 @@ class CommercetoolsMerchant(MerchantBackend):
             items=change_items,
             actor=session.operator,
             actor_kind=ActorKind.AGENT,
+            guardrail_notes=notes,
         )
 
     async def stage_promotion(
@@ -970,3 +1029,37 @@ class CommercetoolsMerchant(MerchantBackend):
                 ).model_dump(),
             ],
         }
+
+    # -- Host reads (portal widgets; no agent tool reaches these) -------------------------
+
+    async def recent_orders(self, limit: int = 8) -> list[dict[str, Any]]:
+        """The order feed the portal's home page shows, newest first."""
+        orders = await self._orders_since(30)
+        rows = []
+        for order in orders[:limit]:
+            rows.append(
+                {
+                    "order_id": order.get("orderNumber") or order["id"],
+                    "status": order.get("orderState") or "Open",
+                    "placed_at": order["createdAt"],
+                    "total": self._order_total(order),
+                    "items": sum(
+                        line.get("quantity") or 0 for line in order.get("lineItems") or []
+                    ),
+                }
+            )
+        return rows
+
+    async def resolved_changes(self) -> list[StagedChange]:
+        """Applied and discarded changes, newest first, for the portal's audit view."""
+        return sorted(self._ledger.resolved(), key=lambda change: change.created_at, reverse=True)
+
+    async def kpi_trends(self, session: MerchantSessionContext) -> dict[str, list[dict[str, Any]]]:
+        """Sparkline series for the portal's KPI tiles. Only the metrics commercetools can
+        actually supply appear here -- traffic and conversion are absent rather than flat
+        lines at zero."""
+        trends: dict[str, list[dict[str, Any]]] = {}
+        for metric in ("sales", "orders"):
+            series = await self.query_metrics(session, metric)
+            trends[metric] = [point.model_dump(mode="json") for point in series.points]
+        return trends

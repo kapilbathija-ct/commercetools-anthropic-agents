@@ -24,6 +24,7 @@ from merchant_agent import MerchantSessionContext, MerchantSessionState
 from pydantic import BaseModel, Field
 
 from .host import append_user_turn, stream_turn
+from .memory import install_memory_routes
 from .sessions import session_dependency
 
 logger = logging.getLogger(__name__)
@@ -64,32 +65,68 @@ def build_merchant_router(
 
     @router.get("/overview")
     async def overview(record: CurrentSession) -> dict:
+        """The portal home page's whole data plane, in the shape the app expects. Traffic
+        and conversion are absent from `trends` rather than drawn as flat zero lines: the
+        limitations list says why, and the tiles read that."""
         session = context(record)
         snapshot = await backend.get_business_snapshot(session)
         alerts = await backend.get_inventory_alerts(session)
         issues = await backend.get_order_issues(session)
         pending = await backend.get_pending_changes(session)
+        resolved = await backend.resolved_changes()
+        # What the host resolved and put in front of the authenticated operator becomes
+        # provenance for this session, the same way a host-side product read does on the
+        # storefront. Without this the portal renders Approve and Dismiss for a change the
+        # gate then refuses, because the change queue is process-wide while `seen_changes`
+        # is per session -- so a change staged in an earlier session is visible and
+        # unactionable. The gate exists to stop the *model* naming a change id it never
+        # saw; it is not meant to stop the store's own queue being worked. Approval is
+        # still required to apply: that mark is set only by a click, for that click.
+        record.state.seen_changes.update({change.change_id: change for change in pending})
         return {
             "snapshot": snapshot.model_dump(mode="json"),
-            "alerts": [alert.model_dump(mode="json") for alert in alerts[:12]],
-            "issues": [issue.model_dump(mode="json") for issue in issues[:12]],
-            "pending_changes": [change.model_dump(mode="json") for change in pending],
+            "needs_attention": {
+                "inventory": [alert.model_dump(mode="json") for alert in alerts[:12]],
+                "order_issues": [issue.model_dump(mode="json") for issue in issues[:12]],
+                "pending_changes": [change.model_dump(mode="json") for change in pending],
+            },
+            "recent_orders": await backend.recent_orders(),
+            "recent_changes": [change.model_dump(mode="json") for change in resolved[:12]],
+            "trends": await backend.kpi_trends(session),
             "limitations": (await backend.get_merchant_context(session) or {}).get(
                 "limitations", []
             ),
         }
 
+    @router.get("/alerts")
+    async def alerts(record: CurrentSession) -> dict:
+        session = context(record)
+        inventory = await backend.get_inventory_alerts(session)
+        issues = await backend.get_order_issues(session)
+        return {
+            "inventory": [alert.model_dump(mode="json") for alert in inventory],
+            "order_issues": [issue.model_dump(mode="json") for issue in issues],
+        }
+
     @router.get("/listings")
-    async def listings(record: CurrentSession, q: str = "", limit: int = 12) -> dict:
-        found = await backend.search_listings(context(record), q, None, limit)
-        return {"listings": [listing.model_dump(mode="json") for listing in found]}
+    async def listings(record: CurrentSession, query: str = "", limit: int = 12) -> dict:
+        found = await backend.search_listings(context(record), query, None, limit)
+        return {
+            "total": len(found),
+            "listings": [listing.model_dump(mode="json") for listing in found],
+        }
 
     @router.get("/listings/{listing_id:path}")
     async def listing(listing_id: str, record: CurrentSession) -> dict:
-        details = await backend.get_listing(context(record), listing_id)
+        session = context(record)
+        details = await backend.get_listing(session, listing_id)
         if details is None:
             raise HTTPException(status_code=404, detail="Listing not found")
-        return details.model_dump(mode="json")
+        pricing = await backend.get_pricing_context(session, listing_id)
+        return {
+            "listing": details.model_dump(mode="json"),
+            "pricing": pricing.model_dump(mode="json") if pricing else None,
+        }
 
     async def change_action(change_id: str, action: str, record: Any) -> dict:
         """The preview card's Approve and Dismiss buttons, through the same executor as the
@@ -137,6 +174,10 @@ def build_merchant_router(
     @router.post("/changes/{change_id:path}/discard")
     async def discard_change(change_id: str, record: CurrentSession) -> dict:
         return await change_action(change_id, "discard_change", record)
+
+    install_memory_routes(
+        router, "/memory", current_session=CurrentSession, memory_store=agent.memory.store
+    )
 
     @router.post("/reset")
     async def reset(record: CurrentSession) -> dict:

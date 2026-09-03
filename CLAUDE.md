@@ -145,16 +145,53 @@ and `amount_received: 3886` in test mode.
 
 ### Merchant agent
 
-- **Module**: `ct_merchant/`. Four flows indexed; `marketing-campaigns` is parked under
-  `skills/_staged/` because commercetools has no campaign system.
-- **Analysis**: `execute_analysis_query` over the read-only warehouse view that order
-  events reach through Subscriptions -> Pub/Sub -> BigQuery, gated on
-  `CT_ANALYSIS_BQ_DATASET`. Traffic and conversion return `None` with a note: that pipeline
-  carries order events, not sessions. Platform Insights `ct_*` is API observability, not
-  commerce metrics.
-- **Approval**: `require_host_approval=True`. Every write is a staged change the host
-  applies; staged changes become commercetools update actions only on approval.
-- **Status**: not yet implemented. See "What is left".
+- **Module**: `ct_merchant/` -- `CommercetoolsMerchant`, config, executor subclass, the four
+  indexed flows, tests. Mounted at `/api/merchant` in the same process as the storefront,
+  so an approved change shows in the shop at once.
+- **Reads**: sales, orders and AOV derived from Orders; listings from staged product data;
+  inventory from Inventory Entries; order issues from payment and shipment state; pricing
+  from the price commercetools itself resolves.
+- **Writes** are staged proposals. Only `apply_change` touches the platform, translating a
+  change into update actions: `changeName`/`setDescription`, `changePrice`, `addQuantity`,
+  `publish`/`unpublish`. **Both the staged check and the guardrails run before the write** --
+  they used to run after it, which meant applying an already-applied change wrote a second
+  time and only then raised, charging a price move or a restock twice.
+- **`require_host_approval=True`.** `apply_change` succeeds only for a change id the host
+  marked approved; a click sets the mark immediately before the executor runs and clears it
+  immediately after, whatever the outcome, so a later chat turn cannot spend a leftover.
+- **The host's overview read records what it showed as provenance.** The change queue is
+  process-wide (the reference's ledger is in-memory for the whole process) while
+  `seen_changes` is per session, so without this the portal rendered Approve and Dismiss
+  for a change the gate then refused. The gate exists to stop the *model* naming a change
+  id it never saw, not to stop the store's own queue being worked; approval is still
+  required to apply.
+- **Which price a write targets is decided by the platform, not by us.** A variant here
+  carries six prices across three currencies, two of them USD, and a raw product read gives
+  no indication of which one selection picks. Reads and writes both go through
+  `/product-projections/search` with price selection, whose resolved `price` carries its own
+  `id`. A "sensible" heuristic preferring the `country: "US"` price disagreed with the
+  platform, which resolves USD/US to the **unscoped** price on this data -- and for a write
+  that means repricing a price the shop never displays.
+- **The merchant reads the list price; the storefront quotes the discounted one.** Showing
+  an operator the discounted figure had search saying $23.52 and the pricing context $27.67
+  for the same listing, which is how a 5% increase gets recorded against a base nobody saw.
+  `money(..., effective=False)` is the merchant's reading.
+- **Stock means what the shop can sell.** A sku carries one Inventory Entry per supply
+  channel -- up to five here, with very different quantities -- and this storefront creates
+  carts with no supply channel, so the channel-less entry is the sellable figure and the
+  same one the shopping agent reads. Judging a single low entry flagged seven well-stocked
+  products (95 to 155 units in total) as sold out; judging the total instead hid five
+  genuine shop-level shortages. A restock proposal names the units sitting in other
+  channels in `guardrail_notes`, because reordering when the stock is a channel away is the
+  wrong call. Negative quantities are reported as they stand: oversold is real state here.
+- **What commercetools cannot supply is `None` with a note, never a zero**: traffic and
+  conversion (no sessions), unit cost and therefore margin (so the price floor is a store
+  rule, `min_price_basis="policy"`), and campaigns, which have no object at all --
+  `enable_campaigns` is off and `marketing-campaigns` stays parked under `skills/_staged/`.
+  All three are in the `limitations` list on the merchant context, and the portal's
+  Conversion tile renders an em dash rather than 0%.
+- **The analysis delegate** stays off until `CT_ANALYSIS_BQ_DATASET` names the read-only
+  warehouse view that order events reach through Subscriptions -> Pub/Sub -> BigQuery.
 
 ## Project gotchas
 
@@ -191,7 +228,14 @@ cd web && npm run build                              # the storefront type-check
 cd web/storefront && npx playwright test             # the browser suite; checkout.spec.ts
                                                      # takes a real Stripe test card and
                                                      # creates a real Order on each run
+cd web/portal && npx playwright test                 # the portal suite
+python scripts/probe_merchant.py                     # every merchant read, live
 ```
+
+## The web apps
+
+`web/` is an npm workspace with three members: `web-shared` (copied from the reference),
+`storefront` (port 3005) and `portal` (port 3105).
 
 ## The storefront
 
@@ -209,10 +253,24 @@ page-context JS cannot reach them, but `frameLocator` drives them over CDP. Targ
 visible label text (`Card number`, `Security code`), not the placeholders, which are
 unrelated example content.
 
+## The portal
+
+`web/portal/`, from `examples/retail/merchant-web`. Its response shapes are the reference's
+(`OverviewResponse`, `AlertsResponse`, `ListingDetailResponse`), so the service matches them
+rather than the app being rewritten. The assistant panel does not offer campaigns: the tools
+are not registered, and advertising them would only produce a refusal.
+
+Two things to expect when testing it. The change queue is **in-memory and process-wide**, so
+staged changes accumulate across runs and clear on restart -- a test that assumes it is the
+only pending change will fail. And a test should assert the audit trail ("Dismissed by
+<operator>") rather than a card's buttons disappearing, which is a rendering detail of the
+vendored component.
+
 ## What is left
 
-- `ct_merchant/`: the `MerchantBackend`, its config and the approval surface.
-- The merchant portal web app, from `examples/retail/merchant-web`.
-- Wire the real principal into `POST /api/session` (marked TODO in `service/main.py`).
+- Wire the real principal into `POST /api/session` (marked TODO in `service/main.py`), and
+  a real operator identity into the merchant router (currently `MERCHANT_OPERATOR`).
+- Put the change ledger behind a store, so staged changes survive a restart and are shared
+  between workers. It is in-process today.
 - Set `REDIS_URL` before running more than one worker.
 - Repoint `NEXT_PUBLIC_API_URL` and the Checkout Application origin for any deployed host.
