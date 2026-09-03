@@ -1,0 +1,14 @@
+[
+  {"key": "returns", "title": "Returns and refunds", "category": "returns",
+   "content": "Most items can be returned within 30 days of delivery in their original condition and packaging. Refunds are issued to the original payment method once the return is received, typically within five business days. Made-to-order and clearance items are final sale and cannot be returned."},
+  {"key": "shipping", "title": "Shipping and delivery", "category": "shipping",
+   "content": "Standard shipping is calculated at checkout from the cart value and the delivery address, and several methods ship free above a threshold shown with the method. Large furniture ships by freight and the carrier arranges a delivery window by phone. Delivery estimates are shown at checkout, not at the time of the order."},
+  {"key": "damaged-items", "title": "Damaged or missing items", "category": "returns",
+   "content": "Report damage or a missing item within 14 days of delivery with photographs of the item and its packaging. A replacement is sent at no cost where stock allows, otherwise the item is refunded in full. Freight deliveries should be inspected before the driver leaves."},
+  {"key": "order-changes", "title": "Changing or cancelling an order", "category": "orders",
+   "content": "An order can be changed or cancelled until it enters fulfilment, usually within a few hours of being placed. Once it has shipped it has to be returned instead. Address changes cannot be made after a freight delivery has been scheduled."},
+  {"key": "price-adjustments", "title": "Price adjustments", "category": "pricing",
+   "content": "If an item's price drops within 14 days of purchase, the difference is refunded once per order on request. Promotional pricing during a sale event is not adjusted retroactively against a later, deeper discount."},
+  {"key": "care-and-warranty", "title": "Care and warranty", "category": "warranty",
+   "content": "Furniture carries a one-year warranty against manufacturing defects from the delivery date; lighting carries two years on electrical components. Care instructions are listed on each product page and damage from improper care is not covered."}
+]
