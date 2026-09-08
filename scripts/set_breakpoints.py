@@ -28,34 +28,42 @@ STORAGE = Path.home() / "Library/Application Support/Code/User/workspaceStorage"
 
 # (label, file, the substring whose line we want, what to look at when it pauses)
 WANTED = [
-    ("1 entry", ROOT / "service/main.py", "async def chat", "request.message"),
+    # Anchor on the first *executable statement* of a function, never the `def` line: a
+    # `def` runs when the module (or the enclosing function) is imported, so a breakpoint
+    # there fires during app startup and the server never reaches the point of binding.
+    ("1 entry", ROOT / "service/main.py",
+     'append_user_turn(record, request.message', "request.message"),
     ("2 model call", SITE / "shopping_agent_runtime/orchestrator.py", "client.messages.stream",
      "request: system, tools (21), messages -- and no mcp_servers"),
     ("3 dispatch", SITE / "commerce_common/execution.py", "handler = self._handlers.get(name)",
      "name, tool_input, handler"),
-    ("4 our backend", ROOT / "ct_shopping/backend.py", "async def search_products",
-     "query, filters.max_price"),
-    ("5 commercetools", ROOT / "ct_common/client.py", "async def graphql", "query, variables"),
-    ("6 mapping", ROOT / "ct_common/mapping.py", "\ndef to_product", "projection in, Product out"),
+    ("4 our backend", ROOT / "ct_shopping/backend.py",
+     "platform_filters = self._price_filter(filters)", "query, filters.max_price"),
+    # two lines: the same post() also fetches the token higher up in the file
+    ("5 commercetools", ROOT / "ct_common/client.py",
+     "response = await self._http.post(\n            self._settings.graphql_url,",
+     "query, variables"),
+    ("6 mapping", ROOT / "ct_common/mapping.py", 'product_id = projection["id"]',
+     "projection in, Product out"),
     ("7 result back", SITE / "shopping_agent_runtime/orchestrator.py",
      "tool_result_block(block.id, outcome)", "the tool_result blocks"),
     # the merchant path's two extra stops, disabled so they stay out of the shopping demo
-    ("8 merchant backend", ROOT / "ct_merchant/backend.py", "async def get_inventory_alerts",
-     "the per-channel stock problem", False),
+    ("8 merchant backend", ROOT / "ct_merchant/backend.py",
+     "async def load() -> list[InventoryAlert]:", "the per-channel stock problem", False),
     ("9 merchant model", SITE / "merchant_agent_runtime/orchestrator.py",
      "client.messages.stream", "same shape, different tools", False),
 ]
 
 
 def line_of(path: Path, needle: str) -> int | None:
-    """1-indexed line holding ``needle``, or None. A leading newline anchors to column 0."""
+    """1-indexed line where ``needle`` starts, or None when it is absent or ambiguous.
+    A needle may span lines, which is how a statement that appears twice is pinned down."""
     if not path.exists():
         return None
     text = path.read_text()
-    at = text.find(needle)
-    if at < 0:
+    if text.count(needle) != 1:
         return None
-    return text.count("\n", 0, at) + (2 if needle.startswith("\n") else 1)
+    return text.count("\n", 0, text.index(needle)) + 1
 
 
 def workspace_db() -> Path:

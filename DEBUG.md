@@ -11,6 +11,12 @@ live. Details at the end.
 
 ## Setup
 
+Run `python scripts/set_breakpoints.py` with **VS Code closed** to install all nine
+breakpoints, then open the folder. Every line below is anchored to the first *executable
+statement* of its function, never the `def` line -- a `def` runs at import, so a breakpoint
+there pauses during app startup and the server never binds its port.
+
+
 `.vscode/launch.json` has **Agent API (debug, for a walkthrough)**. Two settings in it are
 load-bearing:
 
@@ -29,12 +35,12 @@ greps at the bottom if the reference packages are re-pinned.
 
 | # | File | Line | What to show in Variables |
 |---|---|---|---|
-| 1 | `service/main.py` | `228` (`async def chat`) | `request.message` — the user's words arriving |
+| 1 | `service/main.py` | `229` (first line of `chat`) | `request.message` — the user's words arriving |
 | 2 | `.venv/…/shopping_agent_runtime/orchestrator.py` | `209` | `request` — `system`, `tools` (21), `messages`; and no `mcp_servers` |
 | 3 | `.venv/…/commerce_common/execution.py` | `240` | `name`, `tool_input`, then `handler` |
-| 4 | `ct_shopping/backend.py` | `145` (`search_products`) | `query`, `filters.max_price` |
-| 5 | `ct_common/client.py` | `125` (`graphql`) | `query`, `variables` |
-| 6 | `ct_common/mapping.py` | `392` (`to_product`) | `projection` in, `Product` out |
+| 4 | `ct_shopping/backend.py` | `154` (in `search_products`) | `query`, `filters.max_price` |
+| 5 | `ct_common/client.py` | `126` (in `graphql`) | `query`, `variables` |
+| 6 | `ct_common/mapping.py` | `402` (in `to_product`) | `projection` in, `Product` out |
 | 7 | `.venv/…/shopping_agent_runtime/orchestrator.py` | `261` | the `tool_result` blocks going back |
 
 **They do not fire in that order.** The measured order for "chairs under $1000" is:
@@ -54,7 +60,7 @@ Two things in there surprise people:
 `3` fires three times (`search_products`, then `present_products` and `present_suggestions`),
 and `2` and `7` twice each — two model rounds.
 
-For the merchant path swap 4 for `ct_merchant/backend.py:530` (`get_inventory_alerts`) and
+For the merchant path swap 4 for `ct_merchant/backend.py:535` (in `get_inventory_alerts`) and
 2 and 7 for `merchant_agent_runtime/orchestrator.py`.
 
 ## The narration, breakpoint by breakpoint
