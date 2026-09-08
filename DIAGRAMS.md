@@ -4,8 +4,22 @@ Drawn from the real traces in `WALKTHROUGH.md`, not from the design intent — t
 counts, the call fan-out and the concurrency are what `scripts/trace_turn.py` actually
 recorded.
 
-Mermaid renders in GitHub, Notion, Confluence and most slide tools. There is an ASCII
-version of the first one at the bottom for a terminal or a plain slide.
+**Rendered images are in `docs/diagrams/`** — PNG at 2x and SVG. Use those in slides, Loom
+and Google Docs; they need no tooling.
+
+VS Code's built-in markdown preview does **not** render Mermaid — install *Markdown Preview
+Mermaid Support* if you want it inline. GitHub, Notion and Confluence render it natively.
+
+Two things that will break a Mermaid sequence diagram if you edit these, both learned here:
+a `;` anywhere in message text is treated as a statement separator, and a bare `<` or `>`
+can be parsed as HTML. Regenerate with:
+
+```bash
+npx -y @mermaid-js/mermaid-cli -i diagram.mmd -o diagram.png -s 2 -b white
+```
+
+There is also an ASCII version of the first diagram at the bottom, for a terminal or a
+plain slide.
 
 ---
 
@@ -136,7 +150,7 @@ sequenceDiagram
     end
     CT-->>K: listings
 
-    K->>K: sellable = channel-less entry;<br/>other_channels reported separately
+    K->>K: sellable = channel-less entry,<br/>other_channels reported separately
     K-->>X: list[InventoryAlert] + note "window is 30 days"
     X->>X: fence
     X-->>A: ToolOutcome
