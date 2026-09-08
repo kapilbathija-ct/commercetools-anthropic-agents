@@ -22,23 +22,40 @@ load-bearing:
 Stop any `uvicorn` you already have on :8000 first, then start this config. Leave the shop
 (:3005) and portal (:3105) running normally — they are not being debugged.
 
-## The seven breakpoints, in the order they are hit
+## The seven breakpoints, and the order they actually fire
 
-Set them all before you start. Numbers are current as of this commit; if the reference
-packages are re-pinned, re-find them with the greps at the bottom.
+Set them all before you start. Numbers are current as of this commit; re-find them with the
+greps at the bottom if the reference packages are re-pinned.
 
 | # | File | Line | What to show in Variables |
 |---|---|---|---|
 | 1 | `service/main.py` | `228` (`async def chat`) | `request.message` — the user's words arriving |
-| 2 | `.venv/…/shopping_agent_runtime/orchestrator.py` | `209` | `request` — the whole model payload: `system`, `tools` (21), `messages` |
+| 2 | `.venv/…/shopping_agent_runtime/orchestrator.py` | `209` | `request` — `system`, `tools` (21), `messages`; and no `mcp_servers` |
 | 3 | `.venv/…/commerce_common/execution.py` | `240` | `name`, `tool_input`, then `handler` |
 | 4 | `ct_shopping/backend.py` | `145` (`search_products`) | `query`, `filters.max_price` |
 | 5 | `ct_common/client.py` | `125` (`graphql`) | `query`, `variables` |
 | 6 | `ct_common/mapping.py` | `392` (`to_product`) | `projection` in, `Product` out |
-| 7 | `.venv/…/shopping_agent_runtime/orchestrator.py` | `261` | the `tool_result` block going back |
+| 7 | `.venv/…/shopping_agent_runtime/orchestrator.py` | `261` | the `tool_result` blocks going back |
 
-For the merchant path swap 4 for `ct_merchant/backend.py:530` (`get_inventory_alerts`) and 2
-and 7 for `merchant_agent_runtime/orchestrator.py` (`239` and the same append).
+**They do not fire in that order.** The measured order for "chairs under $1000" is:
+
+```
+1 -> 5 -> 2 -> 3 -> 4 -> 5 -> 6 (x8) -> 7 -> 2 -> 3 -> 3 -> 7
+```
+
+Two things in there surprise people:
+
+- **5 fires before 2.** The first `graphql` call is the pre-turn cart lookup, which happens
+  before the model is called at all. Name it when you get there — it is the cart that ends up
+  in the fenced block at breakpoint 2.
+- **6 fires once per product.** Eight results, eight hits. Show the first, then right-click
+  the breakpoint and disable it, or you spend the demo pressing F5.
+
+`3` fires three times (`search_products`, then `present_products` and `present_suggestions`),
+and `2` and `7` twice each — two model rounds.
+
+For the merchant path swap 4 for `ct_merchant/backend.py:530` (`get_inventory_alerts`) and
+2 and 7 for `merchant_agent_runtime/orchestrator.py`.
 
 ## The narration, breakpoint by breakpoint
 
