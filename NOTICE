@@ -1,0 +1,15 @@
+This repository builds on Anthropic's commerce agents reference implementation:
+
+    https://github.com/anthropics/commerce-agents
+    Copyright 2026 Anthropic PBC, licensed under Apache License 2.0
+
+Files carrying an `SPDX-License-Identifier: Apache-2.0` header with Anthropic's copyright
+are that project's, either used unmodified or adapted. `service/host.py`,
+`service/sessions.py` and `service/memory.py` are vendored verbatim; the agent cores, tool
+definitions, prompts and skills are installed as pinned packages and are not copied here.
+
+The commercetools integration is this project's own work: `ct_common/`, `ct_shopping/`,
+`ct_merchant/`, `service/` (except the vendored files above), `web/`, `scripts/`, and the
+documentation. It is offered under the same licence.
+
+No commercetools project data, credentials or customer records are included.

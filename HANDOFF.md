@@ -50,9 +50,7 @@ decisions in it look arbitrary and are not.
 - `CLAUDE.md` — the decision record. **The primary input for skill content.**
 - `README.md` — layout, endpoints, verification.
 - `DEMO.md` — the six-minute in-person arc, with measured timings and failure modes.
-- `LOOM.md` — three recorded clips with narration.
-- `docs/screenshots/` — 11 screenshots + `MANIFEST.md`.
-- `docs/slack-announcement.md` — the internal announcement.
+- `docs/screenshots/` — 11 screenshots of both apps and a real payment.
 - Blog post (Google Docs): *FLASH: Claude's Commerce Agents, Running on commercetools*.
 
 ### Contributions back to the ES workspace

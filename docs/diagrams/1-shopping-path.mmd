@@ -1,0 +1,64 @@
+sequenceDiagram
+    autonumber
+    participant B as Browser<br/>(storefront :3005)
+    participant S as Service<br/>service/main.py
+    participant A as ShoppingAgent<br/>orchestrator.py
+    participant X as Executor + gates<br/>execution.py
+    participant K as Backend<br/>ct_shopping/backend.py
+    participant C as CTClient<br/>ct_common/client.py
+    participant CT as commercetools API
+    participant M as Anthropic<br/>Messages API
+
+    B->>S: POST /api/chat {message}
+    S->>S: append_user_turn to transcript
+    S->>A: stream_turn(messages, session, state)
+
+    Note over A,CT: grounding prefetch — the host reads the cart<br/>before the turn, not the model
+    A->>K: get_cart(session)
+    K->>C: GraphQL FindCart
+    C->>CT: POST /graphql
+    CT-->>C: cart
+    C-->>K: cart
+    K-->>A: Cart
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 1
+    A->>M: messages.stream(system=static prompt, tools=21, messages)
+    M-->>A: stop_reason=tool_use<br/>tool_use search_products {query chair, max_price 1000}
+    end
+
+    A->>X: execute("search_products", args)
+    X->>X: handlers[name] lookup — one dict, no network
+    X->>X: gates (provenance, caps) run BEFORE the platform
+    X->>K: search_products(session, query, filters, limit)
+    K->>C: GraphQL Search + price selection
+    C->>CT: POST /graphql
+    CT-->>C: product projections
+    C-->>K: raw projections
+    K->>K: mapping.to_product — options from what differs,<br/>discounted price, nameAllLocales, sellable stock
+    K-->>X: list[Product]
+    X->>X: remember_products (session provenance)
+    X->>X: fence result, cap 12000 chars
+    X-->>A: ToolOutcome
+    A-->>B: SSE tool_call, tool_result
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 2 — tool_result appended as a user message
+    A->>M: messages + tool_result block
+    M-->>A: tool_use present_products {picks with reasons}
+    end
+
+    A->>X: execute("present_products", picks)
+    X->>X: validate every id against seen_products,<br/>enrich card — NO platform call
+    X-->>A: ui payload
+    A-->>B: SSE ui {component products}
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 3
+    A->>M: messages + tool_result
+    M-->>A: tool_use present_suggestions
+    end
+
+    A-->>B: SSE ui {component suggestions}
+    A-->>B: SSE text_delta, then turn_complete<br/>cache_read=31181
+    Note over B,CT: hosts contacted this turn: api.anthropic.com,<br/>api.commercetools.com, auth.commercetools.com — no MCP

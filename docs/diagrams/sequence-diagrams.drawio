@@ -1,1 +1,501 @@
-<mxfile host="app.diagrams.net" type="device"><diagram id="d1" name="Shopping — chairs under $1000"><mxGraphModel grid="1" gridSize="10" page="1" math="0" shadow="0" dx="1270" dy="1996"><root><mxCell id="0" /><mxCell id="1" parent="0" /><mxCell id="c1-1" parent="1" value="ROUND 1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" vertex="1"><mxGeometry x="60" y="418" width="1050" height="34" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-2" parent="1" value="ROUND 2 — the tool result goes back as a message" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" vertex="1"><mxGeometry x="60" y="1022" width="1050" height="34" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-3" parent="1" value="ROUND 3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" vertex="1"><mxGeometry x="60" y="1384" width="1050" height="34" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-4" parent="1" value="Browser" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="40.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-5" parent="1" value="Browser" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="40.0" y="1796" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-6" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="135.0" y="90" as="sourcePoint" /><mxPoint x="135.0" y="1796" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-7" parent="1" value="Agent&#10;(our process)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="340.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-8" parent="1" value="Agent&#10;(our process)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="340.0" y="1796" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-9" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="90" as="sourcePoint" /><mxPoint x="435.0" y="1796" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-10" parent="1" value="Anthropic&#10;Messages API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="640.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-11" parent="1" value="Anthropic&#10;Messages API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="640.0" y="1796" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-12" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="735.0" y="90" as="sourcePoint" /><mxPoint x="735.0" y="1796" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-13" parent="1" value="commercetools" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="940.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-14" parent="1" value="commercetools" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="940.0" y="1796" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-15" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1035.0" y="90" as="sourcePoint" /><mxPoint x="1035.0" y="1796" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-16" parent="1" value="User types&lt;br/&gt;&quot;show me some chairs under $1000&quot;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="10" y="110" width="460" height="54" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-17" parent="1" value="POST /api/chat" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="135.0" y="226" as="sourcePoint" /><mxPoint x="435.0" y="226" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-18" parent="1" value="read the session's cart&#10;(grounding, before any model call)" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="292" as="sourcePoint" /><mxPoint x="1035.0" y="292" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-19" parent="1" value="Cart — empty" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1035.0" y="358" as="sourcePoint" /><mxPoint x="435.0" y="358" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-20" parent="1" value="static prompt + 21 tool definitions + the message" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="482" as="sourcePoint" /><mxPoint x="735.0" y="482" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-21" parent="1" value="&quot;call search_products&quot;&#10;{query &quot;chair&quot;, filters {max_price 1000}}" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="735.0" y="548" as="sourcePoint" /><mxPoint x="435.0" y="548" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-22" parent="1" value="Inside our process, in this order&lt;br/&gt;1. tool name to Python function — one dict lookup&lt;br/&gt;2. gates run FIRST — provenance, quantity caps&lt;br/&gt;3. then the backend method is allowed to call out" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="205.0" y="604" width="460" height="86" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-23" parent="1" value="GraphQL productProjectionSearch&#10;+ price selection, + locale" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="748" as="sourcePoint" /><mxPoint x="1035.0" y="748" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-24" parent="1" value="5 raw product projections (34 KB)" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1035.0" y="814" as="sourcePoint" /><mxPoint x="435.0" y="814" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-25" parent="1" value="Mapped to typed records&lt;br/&gt;options from attributes that DIFFER across variants&lt;br/&gt;price.discounted.value, not the list price&lt;br/&gt;name from nameAllLocales&lt;br/&gt;then fenced as untrusted data, capped 12k chars" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="205.0" y="870" width="460" height="102" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-26" parent="1" value="same conversation + the fenced product list" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="1086" as="sourcePoint" /><mxPoint x="735.0" y="1086" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-27" parent="1" value="&quot;call present_products&quot;&#10;{5 picks, each with a reason}" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="735.0" y="1152" as="sourcePoint" /><mxPoint x="435.0" y="1152" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-28" parent="1" value="Every id checked against what this session saw.&lt;br/&gt;Card filled in from that record. NO commercetools call." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="205.0" y="1208" width="460" height="54" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c1-29" parent="1" value="SSE ui event — product cards render" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="1324" as="sourcePoint" /><mxPoint x="135.0" y="1324" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-30" parent="1" value="same conversation + result" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="1448" as="sourcePoint" /><mxPoint x="735.0" y="1448" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-31" parent="1" value="&quot;call present_suggestions&quot;, then end_turn" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="735.0" y="1514" as="sourcePoint" /><mxPoint x="435.0" y="1514" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-32" parent="1" value="SSE ui + text, then turn_complete&#10;cache_read 31181 — the prompt prefix was reused" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="1580" as="sourcePoint" /><mxPoint x="135.0" y="1580" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c1-33" parent="1" value="3 model calls. 2 commercetools calls. 10.5s.&lt;br/&gt;Hosts: api.anthropic.com, api.commercetools.com, auth.commercetools.com&lt;br/&gt;No MCP endpoint, in either direction." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="10" y="1636" width="460" height="70" attrib_as="geometry" as="geometry" /></mxCell></root></mxGraphModel></diagram><diagram id="d2" name="Merchant read — slow sellers"><mxGraphModel grid="1" gridSize="10" page="1" math="0" shadow="0" dx="1270" dy="2634"><root><mxCell id="0" /><mxCell id="1" parent="0" /><mxCell id="c2-1" parent="1" value="ROUND 1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" vertex="1"><mxGeometry x="60" y="406" width="1050" height="34" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-2" parent="1" value="ROUND 2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" vertex="1"><mxGeometry x="60" y="702" width="1050" height="34" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-3" parent="1" value="ROUND 3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" vertex="1"><mxGeometry x="60" y="1660" width="1050" height="34" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-4" parent="1" value="ROUND 4" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" vertex="1"><mxGeometry x="60" y="1916" width="1050" height="34" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-5" parent="1" value="Browser&#10;(back office)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="40.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-6" parent="1" value="Browser&#10;(back office)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="40.0" y="2434" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-7" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="135.0" y="90" as="sourcePoint" /><mxPoint x="135.0" y="2434" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-8" parent="1" value="Agent&#10;(our process)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="340.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-9" parent="1" value="Agent&#10;(our process)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="340.0" y="2434" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-10" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="90" as="sourcePoint" /><mxPoint x="435.0" y="2434" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-11" parent="1" value="Anthropic&#10;Messages API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="640.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-12" parent="1" value="Anthropic&#10;Messages API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="640.0" y="2434" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-13" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="735.0" y="90" as="sourcePoint" /><mxPoint x="735.0" y="2434" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-14" parent="1" value="commercetools" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="940.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-15" parent="1" value="commercetools" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="940.0" y="2434" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-16" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1035.0" y="90" as="sourcePoint" /><mxPoint x="1035.0" y="2434" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-17" parent="1" value="Operator types&lt;br/&gt;&quot;give me a list of slow selling&lt;br/&gt;products from the past week&quot;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="10" y="110" width="460" height="70" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-18" parent="1" value="POST /api/merchant/chat" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="135.0" y="240" as="sourcePoint" /><mxPoint x="435.0" y="240" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-19" parent="1" value="The operator identity comes from server-side config.&lt;br/&gt;No request body ever names an operator or a merchant." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="205.0" y="296" width="460" height="54" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-20" parent="1" value="static prompt + 21 tool definitions + the message" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="470" as="sourcePoint" /><mxPoint x="735.0" y="470" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-21" parent="1" value="&quot;call load_skill&quot; {inventory-operations}" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="735.0" y="536" as="sourcePoint" /><mxPoint x="435.0" y="536" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-22" parent="1" value="Read from the in-process skill registry.&lt;br/&gt;Skills are Anthropic's flow files, unchanged. No platform call." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="205.0" y="592" width="460" height="54" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-23" parent="1" value="same conversation + the skill text" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="766" as="sourcePoint" /><mxPoint x="735.0" y="766" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-24" parent="1" value="&quot;call get_inventory_alerts&quot; {}" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="735.0" y="832" as="sourcePoint" /><mxPoint x="435.0" y="832" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-25" parent="1" value="commercetools has no alerts object.&lt;br/&gt;One tool call becomes four kinds of read." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="205.0" y="888" width="460" height="54" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-26" parent="1" value="1. inventory where availableQuantity under 10" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="1004" as="sourcePoint" /><mxPoint x="1035.0" y="1004" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-27" parent="1" value="candidate SKUs" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1035.0" y="1070" as="sourcePoint" /><mxPoint x="435.0" y="1070" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-28" parent="1" value="2. inventory for those SKUs, all supply channels" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="1136" as="sourcePoint" /><mxPoint x="1035.0" y="1136" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-29" parent="1" value="per-channel quantities" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1035.0" y="1202" as="sourcePoint" /><mxPoint x="435.0" y="1202" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-30" parent="1" value="3. orders from the last 30 days" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="1268" as="sourcePoint" /><mxPoint x="1035.0" y="1268" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-31" parent="1" value="order lines, for sales velocity" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1035.0" y="1334" as="sourcePoint" /><mxPoint x="435.0" y="1334" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-32" parent="1" value="4. one product lookup per flagged SKU (4 in parallel)" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="1400" as="sourcePoint" /><mxPoint x="1035.0" y="1400" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-33" parent="1" value="listings" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1035.0" y="1466" as="sourcePoint" /><mxPoint x="435.0" y="1466" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-34" parent="1" value="Alert derived, not read&lt;br/&gt;sellable = the channel-less entry, what the shop can actually sell&lt;br/&gt;other channels reported separately, so nobody reorders stock they own&lt;br/&gt;the result carries a note &quot;the window is 30 days&quot;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="205.0" y="1522" width="460" height="86" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-35" parent="1" value="same conversation + the fenced alerts" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="1724" as="sourcePoint" /><mxPoint x="735.0" y="1724" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-36" parent="1" value="&quot;call present_digest&quot; {items}" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="735.0" y="1790" as="sourcePoint" /><mxPoint x="435.0" y="1790" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-37" parent="1" value="SSE ui event — digest card renders" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="1856" as="sourcePoint" /><mxPoint x="135.0" y="1856" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-38" parent="1" value="same conversation + result" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="1980" as="sourcePoint" /><mxPoint x="735.0" y="1980" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-39" parent="1" value="&quot;call present_suggestions&quot;, then end_turn" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="735.0" y="2046" as="sourcePoint" /><mxPoint x="435.0" y="2046" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-40" parent="1" value="SSE ui + text, then turn_complete" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="2112" as="sourcePoint" /><mxPoint x="135.0" y="2112" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c2-41" parent="1" value="The reply corrects the question&lt;br/&gt;&quot;the data covers 30 days, not a week —&lt;br/&gt;no weekly pace is tracked&quot;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="10" y="2168" width="460" height="70" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c2-42" parent="1" value="4 model calls. 8 commercetools calls. 11.5s.&lt;br/&gt;No MCP endpoint." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="10" y="2288" width="460" height="54" attrib_as="geometry" as="geometry" /></mxCell></root></mxGraphModel></diagram><diagram id="d3" name="Merchant write — the approval gate"><mxGraphModel grid="1" gridSize="10" page="1" math="0" shadow="0" dx="1270" dy="1698"><root><mxCell id="0" /><mxCell id="1" parent="0" /><mxCell id="c3-1" parent="1" value="REQUEST 1 — the agent proposes. Nothing is written." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff4e0;strokeColor=#d6b656;" vertex="1"><mxGeometry x="50" y="220" width="1070" height="34" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-2" parent="1" value="REQUEST 2 — a human clicks Approve. Only now is anything written." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e5f6ec;strokeColor=#82b366;" vertex="1"><mxGeometry x="50" y="794" width="1070" height="34" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-3" parent="1" value="Browser&#10;(back office)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="40.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-4" parent="1" value="Browser&#10;(back office)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="40.0" y="1498" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-5" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="135.0" y="90" as="sourcePoint" /><mxPoint x="135.0" y="1498" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-6" parent="1" value="Agent&#10;(our process)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="340.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-7" parent="1" value="Agent&#10;(our process)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="340.0" y="1498" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-8" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="90" as="sourcePoint" /><mxPoint x="435.0" y="1498" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-9" parent="1" value="Anthropic&#10;Messages API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="640.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-10" parent="1" value="Anthropic&#10;Messages API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="640.0" y="1498" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-11" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="735.0" y="90" as="sourcePoint" /><mxPoint x="735.0" y="1498" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-12" parent="1" value="commercetools" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="940.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-13" parent="1" value="commercetools" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1"><mxGeometry x="940.0" y="1498" width="190" height="50" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-14" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1035.0" y="90" as="sourcePoint" /><mxPoint x="1035.0" y="1498" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-15" parent="1" value="Operator types&lt;br/&gt;&quot;restock the Classic Serving Tray&quot;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="10" y="110" width="460" height="54" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-16" parent="1" value="POST /api/merchant/chat" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="135.0" y="284" as="sourcePoint" /><mxPoint x="435.0" y="284" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-17" parent="1" value="static prompt + tools + the message" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="350" as="sourcePoint" /><mxPoint x="735.0" y="350" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-18" parent="1" value="&quot;call stage_inventory_action&quot; {items}" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="735.0" y="416" as="sourcePoint" /><mxPoint x="435.0" y="416" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-19" parent="1" value="read current stock and other-channel units" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="482" as="sourcePoint" /><mxPoint x="1035.0" y="482" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-20" parent="1" value="quantities" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1035.0" y="548" as="sourcePoint" /><mxPoint x="435.0" y="548" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-21" parent="1" value="Guardrails checked at staging&lt;br/&gt;500 units per restock, 25 items per change, 20% per price move&lt;br/&gt;then the proposal is persisted, status = staged" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="205.0" y="604" width="460" height="70" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-22" parent="1" value="SSE ui — change preview card&#10;Approve / Dismiss / &quot;Nothing applies until you approve&quot;" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="734" as="sourcePoint" /><mxPoint x="135.0" y="734" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-23" parent="1" value="POST /api/merchant/changes/{id}/apply" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="135.0" y="858" as="sourcePoint" /><mxPoint x="435.0" y="858" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-24" parent="1" value="The approval mark is set for THIS call only&lt;br/&gt;gate — the id must be one this session saw&lt;br/&gt;AND one a human approved&lt;br/&gt;staged status and guardrails re-checked BEFORE the write" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="205.0" y="914" width="460" height="86" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-25" parent="1" value="POST /inventory/{id} addQuantity" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="1058" as="sourcePoint" /><mxPoint x="1035.0" y="1058" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-26" parent="1" value="200" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1035.0" y="1124" as="sourcePoint" /><mxPoint x="435.0" y="1124" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-27" parent="1" value="Only now marked applied, stamped with who approved it.&lt;br/&gt;The approval mark is cleared, whatever the outcome." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="205.0" y="1180" width="460" height="54" attrib_as="geometry" as="geometry" /></mxCell><mxCell id="c3-28" parent="1" value="{ok true} — the shop's next read sees the new stock" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1"><mxGeometry relative="1" as="geometry"><mxPoint x="435.0" y="1296" as="sourcePoint" /><mxPoint x="135.0" y="1296" as="targetPoint" /></mxGeometry></mxCell><mxCell id="c3-29" parent="1" value="The model can propose. It cannot approve.&lt;br/&gt;Nothing typed in the chat can approve anything." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1"><mxGeometry x="10" y="1352" width="460" height="54" attrib_as="geometry" as="geometry" /></mxCell></root></mxGraphModel></diagram></mxfile>
+<mxfile host="app.diagrams.net" pages="3">
+  <diagram id="d1" name="Shopping — chairs under $1000">
+    <mxGraphModel dx="1341" dy="685" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="c1-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" value="ROUND 1" vertex="1">
+          <mxGeometry attrib_as="geometry" height="34" width="1050" x="60" y="418" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" value="ROUND 2 — the tool result goes back as a message" vertex="1">
+          <mxGeometry attrib_as="geometry" height="34" width="1050" x="60" y="1022" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" value="ROUND 3" vertex="1">
+          <mxGeometry attrib_as="geometry" height="34" width="1050" x="60" y="1384" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Browser" vertex="1">
+          <mxGeometry attrib_as="geometry" height="50" width="190" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Browser" vertex="1">
+          <mxGeometry attrib_as="geometry" height="50" width="190" x="40" y="1796" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-6" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="135" y="90" as="sourcePoint" />
+            <mxPoint x="135" y="1796" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Agent&#xa;(our process)" vertex="1">
+          <mxGeometry attrib_as="geometry" height="50" width="190" x="340" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-8" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Agent&#xa;(our process)" vertex="1">
+          <mxGeometry attrib_as="geometry" height="50" width="190" x="340" y="1796" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-9" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435" y="90" as="sourcePoint" />
+            <mxPoint x="435" y="1796" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Anthropic&#xa;Messages API" vertex="1">
+          <mxGeometry attrib_as="geometry" height="50" width="190" x="640" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-11" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Anthropic&#xa;Messages API" vertex="1">
+          <mxGeometry attrib_as="geometry" height="50" width="190" x="640" y="1796" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-12" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="735" y="90" as="sourcePoint" />
+            <mxPoint x="735" y="1796" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-13" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="commercetools" vertex="1">
+          <mxGeometry attrib_as="geometry" height="50" width="190" x="940" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-14" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="commercetools" vertex="1">
+          <mxGeometry attrib_as="geometry" height="50" width="190" x="940" y="1796" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-15" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035" y="90" as="sourcePoint" />
+            <mxPoint x="1035" y="1796" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-16" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="User types&lt;br/&gt;&quot;show me some chairs under $1000&quot;" vertex="1">
+          <mxGeometry attrib_as="geometry" height="54" width="460" x="10" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-17" edge="1" parent="1" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" value="POST /api/chat">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="135" y="226" as="sourcePoint" />
+            <mxPoint x="435" y="226" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-18" edge="1" parent="1" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" value="read the session&#39;s cart&lt;br&gt;(using direct Ct APIs)">
+          <mxGeometry relative="1" x="-0.45" y="2" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="435" y="292" as="sourcePoint" />
+            <mxPoint x="1035" y="292" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-19" edge="1" parent="1" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" value="Cart — empty">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035" y="358" as="sourcePoint" />
+            <mxPoint x="435" y="358" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-20" edge="1" parent="1" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" value="static prompt + &lt;br&gt;21 tool definitions (part of the scaffolding) + the message">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435" y="482" as="sourcePoint" />
+            <mxPoint x="735" y="482" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-21" edge="1" parent="1" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" value="&quot;call search_products&quot;&#xa;{query &quot;chair&quot;, filters {max_price 1000}}">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="735" y="548" as="sourcePoint" />
+            <mxPoint x="435" y="548" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-22" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Inside our process, in this order&lt;br/&gt;1. tool name to Python function — one dict lookup&lt;br/&gt;2. gates run FIRST — provenance, quantity caps&lt;br/&gt;3. then the backend method is allowed to call out" vertex="1">
+          <mxGeometry attrib_as="geometry" height="86" width="460" x="205" y="604" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-23" edge="1" parent="1" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" value="GraphQL productProjectionSearch&#xa;+ price selection, + locale">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435" y="748" as="sourcePoint" />
+            <mxPoint x="1035" y="748" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-24" edge="1" parent="1" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" value="5 raw product projections (34 KB)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035" y="814" as="sourcePoint" />
+            <mxPoint x="435" y="814" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-25" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Mapped to typed records&lt;br/&gt;options from attributes that DIFFER across variants&lt;br/&gt;price.discounted.value, not the list price&lt;br/&gt;name from nameAllLocales&lt;br/&gt;then fenced as untrusted data, capped 12k chars" vertex="1">
+          <mxGeometry attrib_as="geometry" height="102" width="460" x="205" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-26" edge="1" parent="1" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" value="same conversation + the fenced product list">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435" y="1086" as="sourcePoint" />
+            <mxPoint x="735" y="1086" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-27" edge="1" parent="1" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" value="&quot;call present_products&quot;&#xa;{5 picks, each with a reason}">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="735" y="1152" as="sourcePoint" />
+            <mxPoint x="435" y="1152" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-28" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Every id checked against what this session saw.&lt;br/&gt;Card filled in from that record. NO commercetools call." vertex="1">
+          <mxGeometry attrib_as="geometry" height="54" width="460" x="205" y="1208" as="geometry" />
+        </mxCell>
+        <mxCell id="c1-29" edge="1" parent="1" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" value="SSE ui event — product cards render">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435" y="1324" as="sourcePoint" />
+            <mxPoint x="135" y="1324" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-30" edge="1" parent="1" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" value="same conversation + result">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435" y="1448" as="sourcePoint" />
+            <mxPoint x="735" y="1448" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-31" edge="1" parent="1" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" value="&quot;call present_suggestions&quot;, then end_turn">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="735" y="1514" as="sourcePoint" />
+            <mxPoint x="435" y="1514" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-32" edge="1" parent="1" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" value="SSE ui + text, then turn_complete&#xa;cache_read 31181 — the prompt prefix was reused">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435" y="1580" as="sourcePoint" />
+            <mxPoint x="135" y="1580" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c1-33" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="3 model calls. 2 commercetools calls. 10.5s.&lt;br/&gt;Hosts: api.anthropic.com, api.commercetools.com, auth.commercetools.com&lt;br/&gt;No MCP endpoint, in either direction." vertex="1">
+          <mxGeometry attrib_as="geometry" height="70" width="460" x="10" y="1636" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="d2" name="Merchant read — slow sellers">
+    <mxGraphModel grid="1" gridSize="10" page="1" math="0" shadow="0" dx="1270" dy="2634">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="c2-1" parent="1" value="ROUND 1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" vertex="1">
+          <mxGeometry x="60" y="406" width="1050" height="34" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-2" parent="1" value="ROUND 2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" vertex="1">
+          <mxGeometry x="60" y="702" width="1050" height="34" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-3" parent="1" value="ROUND 3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" vertex="1">
+          <mxGeometry x="60" y="1660" width="1050" height="34" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-4" parent="1" value="ROUND 4" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1e9f7;strokeColor=#9db2dc;" vertex="1">
+          <mxGeometry x="60" y="1916" width="1050" height="34" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-5" parent="1" value="Browser&#xa;(back office)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="40.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-6" parent="1" value="Browser&#xa;(back office)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="40.0" y="2434" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-7" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="135.0" y="90" as="sourcePoint" />
+            <mxPoint x="135.0" y="2434" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-8" parent="1" value="Agent&#xa;(our process)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="340.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-9" parent="1" value="Agent&#xa;(our process)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="340.0" y="2434" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-10" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="90" as="sourcePoint" />
+            <mxPoint x="435.0" y="2434" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-11" parent="1" value="Anthropic&#xa;Messages API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="640.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-12" parent="1" value="Anthropic&#xa;Messages API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="640.0" y="2434" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-13" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="735.0" y="90" as="sourcePoint" />
+            <mxPoint x="735.0" y="2434" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-14" parent="1" value="commercetools" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="940.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-15" parent="1" value="commercetools" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="940.0" y="2434" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-16" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035.0" y="90" as="sourcePoint" />
+            <mxPoint x="1035.0" y="2434" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-17" parent="1" value="Operator types&lt;br/&gt;&quot;give me a list of slow selling&lt;br/&gt;products from the past week&quot;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="10" y="110" width="460" height="70" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-18" parent="1" value="POST /api/merchant/chat" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="135.0" y="240" as="sourcePoint" />
+            <mxPoint x="435.0" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-19" parent="1" value="The operator identity comes from server-side config.&lt;br/&gt;No request body ever names an operator or a merchant." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="205.0" y="296" width="460" height="54" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-20" parent="1" value="static prompt + 21 tool definitions + the message" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="470" as="sourcePoint" />
+            <mxPoint x="735.0" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-21" parent="1" value="&quot;call load_skill&quot; {inventory-operations}" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="735.0" y="536" as="sourcePoint" />
+            <mxPoint x="435.0" y="536" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-22" parent="1" value="Read from the in-process skill registry.&lt;br/&gt;Skills are Anthropic&#39;s flow files, unchanged. No platform call." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="205.0" y="592" width="460" height="54" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-23" parent="1" value="same conversation + the skill text" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="766" as="sourcePoint" />
+            <mxPoint x="735.0" y="766" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-24" parent="1" value="&quot;call get_inventory_alerts&quot; {}" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="735.0" y="832" as="sourcePoint" />
+            <mxPoint x="435.0" y="832" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-25" parent="1" value="commercetools has no alerts object.&lt;br/&gt;One tool call becomes four kinds of read." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="205.0" y="888" width="460" height="54" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-26" parent="1" value="1. inventory where availableQuantity under 10" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="1004" as="sourcePoint" />
+            <mxPoint x="1035.0" y="1004" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-27" parent="1" value="candidate SKUs" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035.0" y="1070" as="sourcePoint" />
+            <mxPoint x="435.0" y="1070" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-28" parent="1" value="2. inventory for those SKUs, all supply channels" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="1136" as="sourcePoint" />
+            <mxPoint x="1035.0" y="1136" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-29" parent="1" value="per-channel quantities" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035.0" y="1202" as="sourcePoint" />
+            <mxPoint x="435.0" y="1202" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-30" parent="1" value="3. orders from the last 30 days" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="1268" as="sourcePoint" />
+            <mxPoint x="1035.0" y="1268" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-31" parent="1" value="order lines, for sales velocity" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035.0" y="1334" as="sourcePoint" />
+            <mxPoint x="435.0" y="1334" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-32" parent="1" value="4. one product lookup per flagged SKU (4 in parallel)" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="1400" as="sourcePoint" />
+            <mxPoint x="1035.0" y="1400" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-33" parent="1" value="listings" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035.0" y="1466" as="sourcePoint" />
+            <mxPoint x="435.0" y="1466" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-34" parent="1" value="Alert derived, not read&lt;br/&gt;sellable = the channel-less entry, what the shop can actually sell&lt;br/&gt;other channels reported separately, so nobody reorders stock they own&lt;br/&gt;the result carries a note &quot;the window is 30 days&quot;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="205.0" y="1522" width="460" height="86" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-35" parent="1" value="same conversation + the fenced alerts" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="1724" as="sourcePoint" />
+            <mxPoint x="735.0" y="1724" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-36" parent="1" value="&quot;call present_digest&quot; {items}" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="735.0" y="1790" as="sourcePoint" />
+            <mxPoint x="435.0" y="1790" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-37" parent="1" value="SSE ui event — digest card renders" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="1856" as="sourcePoint" />
+            <mxPoint x="135.0" y="1856" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-38" parent="1" value="same conversation + result" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="1980" as="sourcePoint" />
+            <mxPoint x="735.0" y="1980" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-39" parent="1" value="&quot;call present_suggestions&quot;, then end_turn" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="735.0" y="2046" as="sourcePoint" />
+            <mxPoint x="435.0" y="2046" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-40" parent="1" value="SSE ui + text, then turn_complete" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="2112" as="sourcePoint" />
+            <mxPoint x="135.0" y="2112" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c2-41" parent="1" value="The reply corrects the question&lt;br/&gt;&quot;the data covers 30 days, not a week —&lt;br/&gt;no weekly pace is tracked&quot;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="10" y="2168" width="460" height="70" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c2-42" parent="1" value="4 model calls. 8 commercetools calls. 11.5s.&lt;br/&gt;No MCP endpoint." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="10" y="2288" width="460" height="54" attrib_as="geometry" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="d3" name="Merchant write — the approval gate">
+    <mxGraphModel grid="1" gridSize="10" page="1" math="0" shadow="0" dx="1270" dy="1698">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="c3-1" parent="1" value="REQUEST 1 — the agent proposes. Nothing is written." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff4e0;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="50" y="220" width="1070" height="34" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-2" parent="1" value="REQUEST 2 — a human clicks Approve. Only now is anything written." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e5f6ec;strokeColor=#82b366;" vertex="1">
+          <mxGeometry x="50" y="794" width="1070" height="34" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-3" parent="1" value="Browser&#xa;(back office)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="40.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-4" parent="1" value="Browser&#xa;(back office)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="40.0" y="1498" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-5" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="135.0" y="90" as="sourcePoint" />
+            <mxPoint x="135.0" y="1498" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-6" parent="1" value="Agent&#xa;(our process)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="340.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-7" parent="1" value="Agent&#xa;(our process)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="340.0" y="1498" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-8" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="90" as="sourcePoint" />
+            <mxPoint x="435.0" y="1498" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-9" parent="1" value="Anthropic&#xa;Messages API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="640.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-10" parent="1" value="Anthropic&#xa;Messages API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="640.0" y="1498" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-11" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="735.0" y="90" as="sourcePoint" />
+            <mxPoint x="735.0" y="1498" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-12" parent="1" value="commercetools" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="940.0" y="40" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-13" parent="1" value="commercetools" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="940.0" y="1498" width="190" height="50" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-14" parent="1" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;strokeWidth=2;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035.0" y="90" as="sourcePoint" />
+            <mxPoint x="1035.0" y="1498" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-15" parent="1" value="Operator types&lt;br/&gt;&quot;restock the Classic Serving Tray&quot;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="10" y="110" width="460" height="54" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-16" parent="1" value="POST /api/merchant/chat" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="135.0" y="284" as="sourcePoint" />
+            <mxPoint x="435.0" y="284" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-17" parent="1" value="static prompt + tools + the message" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="350" as="sourcePoint" />
+            <mxPoint x="735.0" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-18" parent="1" value="&quot;call stage_inventory_action&quot; {items}" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="735.0" y="416" as="sourcePoint" />
+            <mxPoint x="435.0" y="416" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-19" parent="1" value="read current stock and other-channel units" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="482" as="sourcePoint" />
+            <mxPoint x="1035.0" y="482" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-20" parent="1" value="quantities" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035.0" y="548" as="sourcePoint" />
+            <mxPoint x="435.0" y="548" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-21" parent="1" value="Guardrails checked at staging&lt;br/&gt;500 units per restock, 25 items per change, 20% per price move&lt;br/&gt;then the proposal is persisted, status = staged" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="205.0" y="604" width="460" height="70" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-22" parent="1" value="SSE ui — change preview card&#xa;Approve / Dismiss / &quot;Nothing applies until you approve&quot;" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="734" as="sourcePoint" />
+            <mxPoint x="135.0" y="734" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-23" parent="1" value="POST /api/merchant/changes/{id}/apply" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="135.0" y="858" as="sourcePoint" />
+            <mxPoint x="435.0" y="858" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-24" parent="1" value="The approval mark is set for THIS call only&lt;br/&gt;gate — the id must be one this session saw&lt;br/&gt;AND one a human approved&lt;br/&gt;staged status and guardrails re-checked BEFORE the write" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="205.0" y="914" width="460" height="86" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-25" parent="1" value="POST /inventory/{id} addQuantity" style="endArrow=block;html=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="1058" as="sourcePoint" />
+            <mxPoint x="1035.0" y="1058" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-26" parent="1" value="200" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1035.0" y="1124" as="sourcePoint" />
+            <mxPoint x="435.0" y="1124" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-27" parent="1" value="Only now marked applied, stamped with who approved it.&lt;br/&gt;The approval mark is cleared, whatever the outcome." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="205.0" y="1180" width="460" height="54" attrib_as="geometry" as="geometry" />
+        </mxCell>
+        <mxCell id="c3-28" parent="1" value="{ok true} — the shop&#39;s next read sees the new stock" style="endArrow=block;html=1;dashed=1;strokeColor=#333333;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435.0" y="1296" as="sourcePoint" />
+            <mxPoint x="135.0" y="1296" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c3-29" parent="1" value="The model can propose. It cannot approve.&lt;br/&gt;Nothing typed in the chat can approve anything." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="10" y="1352" width="460" height="54" attrib_as="geometry" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,6 +1,9 @@
 # Code-path walkthrough — one turn, end to end, no Commerce MCP
 
-For a recording aimed at implementers. Two traces: a shopping turn and a merchant turn.
+For a recording aimed at implementers. Two ways to do it, and they are for different
+things: **the debugger** (below, and what to use on camera) shows real values in real
+frames, while **the tracer** proves what the debugger cannot — every host the turn
+contacted, in one frame.
 
 ```bash
 python scripts/trace_turn.py shop     "show me some chairs under \$1000"
@@ -162,7 +165,7 @@ endpoint, in either direction.** Reinforce it three ways on camera:
 ### Why it was built this way — the line to land
 
 > "There's an easier version of this: give the Messages API a commercetools MCP server and
-> let the model call it. We had that. The problem is the tool loop runs inside the model
+> let the model call it. The problem is that the tool loop then runs inside the model
 > provider's infrastructure — so by the time your code can check a cart write was scoped to
 > the right shopper, the write has already happened. You can block the reply; you can't
 > block the write. Here the tool runs in our process, so the provenance gate and the caps
@@ -178,3 +181,81 @@ endpoint, in either direction.** Reinforce it three ways on camera:
 - Have `ct_common/mapping.py` and `commerce_common/execution.py:214-245` open in a second
   tab — those two files are where the interesting half of the answer lives.
 - Total footage: two traces at ~11s each plus narration is about 8 minutes.
+- The trace above shows three model calls; a later run of the same prompt took two. Both are
+  correct — the loop runs until the model stops asking for tools, so say "two on this run"
+  rather than stating a fixed number.
+
+---
+
+# Doing it in the debugger
+
+Better on camera, because the audience watches a real request from the real browser and sees
+the actual `tool_use` block, the raw commercetools JSON and the mapped records, instead of a
+summary someone wrote.
+
+## Setup
+
+With **VS Code closed**, run `python scripts/set_breakpoints.py` — it installs all ten
+breakpoints, anchored by pattern rather than by line number, so a re-pin of the reference
+packages moves them. Then open the folder and use **Run → Start Debugging**; `launch.json`
+has one configuration and it is already selected.
+
+Two settings in it are load-bearing. **`justMyCode: false`**, or the four breakpoints inside
+`.venv` never bind and the two most interesting frames are missing. And **`autoReload:
+false`**, or a reload mid-demo restarts the process and drops the session.
+
+Stop any other uvicorn on :8000 first. The shop (:3005) and portal (:3105) run normally.
+
+## The ten breakpoints
+
+| # | File | Line | What to inspect |
+|---|---|---|---|
+| 1 | `service/main.py` | `229` | `request.message` — the user's words arriving |
+| 2 | `shopping_agent_runtime/orchestrator.py` | `209` | `list(request.keys())`, `len(request["tools"])`, and `"mcp_servers" in request` → False |
+| 3 | `commerce_common/execution.py` | `231` | `name`, `tool_input` — every tool passes here |
+| 4 | `commerce_common/execution.py` | `240` | `handler` — a bound method of our own class |
+| 5 | `ct_shopping/backend.py` | `154` | `query`, `filters` |
+| 6 | `ct_common/client.py` | `126` | `variables` — price selection and locale |
+| 7 | `ct_common/mapping.py` | `402` | variant count, price count, `attribute_types` |
+| 8 | `shopping_agent_runtime/orchestrator.py` | `261` | `block.name`, `outcome` |
+| 9 | `ct_merchant/backend.py` | `535` | the per-channel stock problem |
+| 10 | `merchant_agent_runtime/orchestrator.py` | `239` | same shape, different tools |
+
+7, 9 and 10 install **disabled**. 6 carries the condition `"query Search" in query`.
+
+## Three things the first live run exposed
+
+**Never breakpoint a `def` line.** A `def` executes at import, so a breakpoint there fires
+during app startup: uvicorn paused inside `register_routes` and never bound its port, which
+looks exactly like a crash. Every anchor is a statement *inside* the function.
+
+**One `graphql()` serves all seven documents in `graphql.py`.** The storefront's own page
+load fires `Browse` for the catalogue index and `FindCart` for the cart through it dozens of
+times before the shopper types anything — hence the condition on 6. `to_product` is worse:
+once per product, ~100 times on a page load, so 7 stays off until the search is in flight.
+
+**The handler lookup only catches backend tools.** A presentation tool returns two branches
+earlier, so without breakpoint 3 `present_products` never pauses and the walkthrough loses
+its ending.
+
+## The firing order
+
+```
+1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 (xN) -> 8 -> 2 -> 3 -> 3 -> 8
+```
+
+2 and 8 fire once per round, 3 once per tool call. Use **Continue**, not step-into: these
+are async frames and stepping in lands in SDK plumbing.
+
+## What will bite you live
+
+The browser request is a long-lived SSE stream and you are pausing it. With every breakpoint
+set, the fetch can outlast the browser's patience and the UI may show an error even though
+the server finished. Either say so up front, or disable 6, 7 and 8 for a first pass.
+
+Read values in the **Debug Console** rather than the Variables pane — `request.message`,
+`len(request["tools"])`, `[t["name"] for t in request["tools"]]`. Inline hints truncate, and
+the console is far easier to read on video.
+
+Start from a fresh browser session. A cart with items in it means the pre-turn grounding read
+returns more, which adds noise to breakpoint 2's `messages`.

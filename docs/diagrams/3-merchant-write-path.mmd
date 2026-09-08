@@ -1,0 +1,44 @@
+sequenceDiagram
+    autonumber
+    participant O as Operator<br/>(portal)
+    participant S as Service<br/>service/merchant.py
+    participant A as MerchantAgent
+    participant X as Executor + gates
+    participant K as Backend
+    participant L as Ledger<br/>Custom Objects
+    participant CT as commercetools API
+    participant M as Anthropic
+
+    Note over O,CT: REQUEST 1 — the agent proposes. Nothing is written.
+    O->>S: POST /api/merchant/chat "restock the serving tray"
+    S->>A: stream_turn
+    A->>M: round 1
+    M-->>A: tool_use stage_inventory_action
+    A->>X: execute("stage_inventory_action")
+    X->>K: stage_inventory_action(items)
+    K->>CT: read current stock and other-channel units
+    CT-->>K: quantities
+    K->>K: check_guardrails — 500-unit cap, 25 items per change
+    K->>L: persist StagedChange status=staged
+    K-->>X: StagedChange + note "160 units in other channels"
+    X-->>A: ToolOutcome
+    A-->>O: SSE ui {component change_preview}<br/>Approve / Dismiss / "Nothing applies until you approve"
+
+    Note over O,CT: REQUEST 2 — the human approves. Only now is anything written.
+    O->>S: POST /api/merchant/changes/{id}/apply
+    S->>S: mark id approved for THIS call only
+    S->>X: execute("apply_change", {change_id})
+    X->>X: gate — id must be in seen_changes AND in approved_change_ids
+    X->>K: apply_change(change_id)
+    K->>L: require status=staged
+    L-->>K: StagedChange
+    K->>K: re-check guardrails under the current config
+    K->>CT: POST /inventory/{id} addQuantity
+    CT-->>K: 200
+    K->>L: mark applied, stamp applied_by
+    K-->>X: StagedChange status=applied
+    X-->>S: change_update
+    S->>S: clear the approval mark, whatever the outcome
+    S-->>O: {ok true, change}
+
+    Note over S,K: the staged check and the guardrails run BEFORE the write.<br/>They used to run after, so applying twice wrote twice.
