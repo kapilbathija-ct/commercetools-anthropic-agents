@@ -17,6 +17,9 @@ import type { AgentApi } from "web-shared";
  */
 const STORAGE_KEY = "ct-agent-session";
 
+/** What the shop calls the visitor until real sign-in replaces it. */
+const SHOPPER_NAME = "Kapil";
+
 /** web-shared's own `Session` shape, plus `ready` so a second route can wait for it. */
 export interface StoredSession {
   sessionId: string | null;
@@ -42,7 +45,7 @@ export function useStoredSession(api: AgentApi): StoredSession {
         // Any scoped route works as a liveness check; the cart is the cheapest.
         const alive = await api.get<unknown>("/cart");
         if (alive !== null && !cancelled) {
-          setSession({ sessionId: stored, guest: true, shopper: { name: "Guest" }, ready: true });
+          setSession({ sessionId: stored, guest: true, shopper: { name: SHOPPER_NAME }, ready: true });
           return;
         }
       }
@@ -54,7 +57,7 @@ export function useStoredSession(api: AgentApi): StoredSession {
       setSession({
         sessionId: id,
         guest: true,
-        shopper: { name: started?.shopper?.name ?? "Guest" },
+        shopper: { name: started?.shopper?.name ?? SHOPPER_NAME },
         ready: true,
       });
     }
