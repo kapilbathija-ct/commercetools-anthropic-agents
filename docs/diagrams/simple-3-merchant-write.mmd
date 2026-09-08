@@ -1,0 +1,31 @@
+sequenceDiagram
+    autonumber
+    participant B as Browser<br/>(back office)
+    participant A as Agent<br/>(our process)
+    participant M as Anthropic<br/>Messages API
+    participant CT as commercetools
+
+    Note over B: Operator types<br/>"restock the Classic Serving Tray"
+
+    rect rgb(255, 249, 235)
+    Note over B,CT: REQUEST 1 — the agent proposes. Nothing is written.
+    B->>A: POST /api/merchant/chat
+    A->>M: static prompt + tools + the message
+    M-->>A: "call stage_inventory_action" {items}
+    A->>CT: read current stock and other-channel units
+    CT-->>A: quantities
+    Note over A: Guardrails checked at staging<br/>500 units per restock, 25 items per change, 20% per price move<br/>then the proposal is persisted, status = staged
+    A-->>B: SSE ui — change preview card<br/>Approve / Dismiss / "Nothing applies until you approve"
+    end
+
+    rect rgb(235, 250, 240)
+    Note over B,CT: REQUEST 2 — a human clicks Approve. Only now is anything written.
+    B->>A: POST /api/merchant/changes/{id}/apply
+    Note over A: The approval mark is set for THIS call only<br/>gate — the id must be one this session saw AND one a human approved<br/>staged status and guardrails re-checked BEFORE the write
+    A->>CT: POST /inventory/{id} addQuantity
+    CT-->>A: 200
+    Note over A: Only now marked applied, stamped with who approved it.<br/>The approval mark is cleared, whatever the outcome.
+    A-->>B: {ok true} — the shop's next read sees the new stock
+    end
+
+    Note over B,CT: The model can propose. It cannot approve.<br/>Nothing typed in the chat can approve anything.

@@ -1,0 +1,45 @@
+sequenceDiagram
+    autonumber
+    participant B as Browser
+    participant A as Agent<br/>(our process)
+    participant M as Anthropic<br/>Messages API
+    participant CT as commercetools
+
+    Note over B: User types<br/>"show me some chairs under $1000"
+
+    B->>A: POST /api/chat
+    A->>CT: read the session's cart (grounding, before any model call)
+    CT-->>A: Cart — empty
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 1
+    A->>M: static prompt + 21 tool definitions + the message
+    M-->>A: "call search_products"<br/>{query "chair", filters {max_price 1000}}
+    end
+
+    Note over A: Inside our process, in this order<br/>1. tool name to Python function — one dict lookup<br/>2. gates run FIRST — provenance, quantity caps<br/>3. then the backend method is allowed to call out
+
+    A->>CT: GraphQL productProjectionSearch<br/>+ price selection, + locale
+    CT-->>A: 5 raw product projections (34 KB)
+
+    Note over A: Mapped to typed records<br/>options from attributes that DIFFER across variants<br/>price.discounted.value, not the list price<br/>name from nameAllLocales<br/>then fenced as untrusted data, capped 12k chars
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 2 — the tool result goes back as a message
+    A->>M: same conversation + the fenced product list
+    M-->>A: "call present_products"<br/>{5 picks, each with a reason}
+    end
+
+    Note over A: Every id checked against what this session saw.<br/>Card filled in from that record. NO commercetools call.
+
+    A-->>B: SSE ui event — product cards render
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 3
+    A->>M: same conversation + result
+    M-->>A: "call present_suggestions", then end_turn
+    end
+
+    A-->>B: SSE ui + text, then turn_complete<br/>cache_read 31181 — the prompt prefix was reused
+
+    Note over B,CT: 3 model calls. 2 commercetools calls. 10.5s.<br/>Hosts contacted: api.anthropic.com, api.commercetools.com, auth.commercetools.com

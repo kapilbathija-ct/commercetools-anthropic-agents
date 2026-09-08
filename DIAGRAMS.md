@@ -21,6 +21,178 @@ npx -y @mermaid-js/mermaid-cli -i diagram.mmd -o diagram.png -s 2 -b white
 There is also an ASCII version of the first diagram at the bottom, for a terminal or a
 plain slide.
 
+## Two sets, for two audiences
+
+**Four lanes — for a room.** Browser, Agent, Anthropic, commercetools. Everything inside our
+process is one lane, because to an audience it is one thing. What the agent does internally
+is a note, not a lane, so a network hop and an in-process step never look alike. Each starts
+with the prompt the user typed and says what every layer handed back.
+
+| | |
+|---|---|
+| `docs/diagrams/simple-1-shopping.png` | "show me some chairs under $1000" |
+| `docs/diagrams/simple-2-merchant-read.png` | "give me a list of slow selling products from the past week" |
+| `docs/diagrams/simple-3-merchant-write.png` | "restock the Classic Serving Tray" — propose, then approve |
+
+**Eight lanes — for an engineer.** Service, orchestrator, executor, backend and client as
+separate lanes, so the file that owns each hop is visible. Further down this file. Use these
+when someone asks *where in the code*, not *what happens*.
+
+The `.mmd` sources sit beside the PNGs in `docs/diagrams/`, so either set can be edited and
+re-rendered.
+
+---
+
+## Four-lane: shopping
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant B as Browser
+    participant A as Agent<br/>(our process)
+    participant M as Anthropic<br/>Messages API
+    participant CT as commercetools
+
+    Note over B: User types<br/>"show me some chairs under $1000"
+
+    B->>A: POST /api/chat
+    A->>CT: read the session's cart (grounding, before any model call)
+    CT-->>A: Cart — empty
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 1
+    A->>M: static prompt + 21 tool definitions + the message
+    M-->>A: "call search_products"<br/>{query "chair", filters {max_price 1000}}
+    end
+
+    Note over A: Inside our process, in this order<br/>1. tool name to Python function — one dict lookup<br/>2. gates run FIRST — provenance, quantity caps<br/>3. then the backend method is allowed to call out
+
+    A->>CT: GraphQL productProjectionSearch<br/>+ price selection, + locale
+    CT-->>A: 5 raw product projections (34 KB)
+
+    Note over A: Mapped to typed records<br/>options from attributes that DIFFER across variants<br/>price.discounted.value, not the list price<br/>name from nameAllLocales<br/>then fenced as untrusted data, capped 12k chars
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 2 — the tool result goes back as a message
+    A->>M: same conversation + the fenced product list
+    M-->>A: "call present_products"<br/>{5 picks, each with a reason}
+    end
+
+    Note over A: Every id checked against what this session saw.<br/>Card filled in from that record. NO commercetools call.
+
+    A-->>B: SSE ui event — product cards render
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 3
+    A->>M: same conversation + result
+    M-->>A: "call present_suggestions", then end_turn
+    end
+
+    A-->>B: SSE ui + text, then turn_complete<br/>cache_read 31181 — the prompt prefix was reused
+
+    Note over B,CT: 3 model calls. 2 commercetools calls. 10.5s.<br/>Hosts contacted: api.anthropic.com, api.commercetools.com, auth.commercetools.com
+```
+
+## Four-lane: merchant read
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant B as Browser<br/>(back office)
+    participant A as Agent<br/>(our process)
+    participant M as Anthropic<br/>Messages API
+    participant CT as commercetools
+
+    Note over B: Operator types<br/>"give me a list of slow selling products from the past week"
+
+    B->>A: POST /api/merchant/chat
+    Note over A: The operator identity comes from server-side config.<br/>No request body ever names an operator or a merchant.
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 1
+    A->>M: static prompt + 21 tool definitions + the message
+    M-->>A: "call load_skill" {inventory-operations}
+    end
+    Note over A: Read from the in-process skill registry.<br/>Skills are Anthropic's flow files, unchanged. No platform call.
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 2
+    A->>M: same conversation + the skill text
+    M-->>A: "call get_inventory_alerts" {}
+    end
+
+    Note over A,CT: commercetools has no alerts object.<br/>One tool call becomes four kinds of read.
+
+    A->>CT: 1. inventory where availableQuantity under 10
+    CT-->>A: candidate SKUs
+    A->>CT: 2. inventory for those SKUs, all supply channels
+    CT-->>A: per-channel quantities
+    A->>CT: 3. orders from the last 30 days
+    CT-->>A: order lines, for sales velocity
+    A->>CT: 4. one product lookup per flagged SKU (4 in parallel)
+    CT-->>A: listings
+
+    Note over A: Alert derived, not read<br/>sellable = the channel-less entry, what the shop can actually sell<br/>other channels reported separately, so nobody reorders stock they own<br/>the result carries a note "the window is 30 days"
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 3
+    A->>M: same conversation + the fenced alerts
+    M-->>A: "call present_digest" {items}
+    end
+    A-->>B: SSE ui event — digest card renders
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 4
+    A->>M: same conversation + result
+    M-->>A: "call present_suggestions", then end_turn
+    end
+    A-->>B: SSE ui + text, then turn_complete
+
+    Note over B: The reply corrects the question<br/>"the data covers 30 days, not a week — no weekly pace is tracked"
+
+    Note over B,CT: 4 model calls. 8 commercetools calls. 11.5s.<br/>Hosts contacted: api.anthropic.com, api.commercetools.com, auth.commercetools.com
+```
+
+## Four-lane: merchant write — the approval gate
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant B as Browser<br/>(back office)
+    participant A as Agent<br/>(our process)
+    participant M as Anthropic<br/>Messages API
+    participant CT as commercetools
+
+    Note over B: Operator types<br/>"restock the Classic Serving Tray"
+
+    rect rgb(255, 249, 235)
+    Note over B,CT: REQUEST 1 — the agent proposes. Nothing is written.
+    B->>A: POST /api/merchant/chat
+    A->>M: static prompt + tools + the message
+    M-->>A: "call stage_inventory_action" {items}
+    A->>CT: read current stock and other-channel units
+    CT-->>A: quantities
+    Note over A: Guardrails checked at staging<br/>500 units per restock, 25 items per change, 20% per price move<br/>then the proposal is persisted, status = staged
+    A-->>B: SSE ui — change preview card<br/>Approve / Dismiss / "Nothing applies until you approve"
+    end
+
+    rect rgb(235, 250, 240)
+    Note over B,CT: REQUEST 2 — a human clicks Approve. Only now is anything written.
+    B->>A: POST /api/merchant/changes/{id}/apply
+    Note over A: The approval mark is set for THIS call only<br/>gate — the id must be one this session saw AND one a human approved<br/>staged status and guardrails re-checked BEFORE the write
+    A->>CT: POST /inventory/{id} addQuantity
+    CT-->>A: 200
+    Note over A: Only now marked applied, stamped with who approved it.<br/>The approval mark is cleared, whatever the outcome.
+    A-->>B: {ok true} — the shop's next read sees the new stock
+    end
+
+    Note over B,CT: The model can propose. It cannot approve.<br/>Nothing typed in the chat can approve anything.
+```
+
+---
+
+# The eight-lane versions, for an engineer
+
 ---
 
 ## 1. Shopping path — "show me some chairs under $1000"

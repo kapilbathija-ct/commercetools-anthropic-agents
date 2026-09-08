@@ -1,0 +1,55 @@
+sequenceDiagram
+    autonumber
+    participant B as Browser<br/>(back office)
+    participant A as Agent<br/>(our process)
+    participant M as Anthropic<br/>Messages API
+    participant CT as commercetools
+
+    Note over B: Operator types<br/>"give me a list of slow selling products from the past week"
+
+    B->>A: POST /api/merchant/chat
+    Note over A: The operator identity comes from server-side config.<br/>No request body ever names an operator or a merchant.
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 1
+    A->>M: static prompt + 21 tool definitions + the message
+    M-->>A: "call load_skill" {inventory-operations}
+    end
+    Note over A: Read from the in-process skill registry.<br/>Skills are Anthropic's flow files, unchanged. No platform call.
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 2
+    A->>M: same conversation + the skill text
+    M-->>A: "call get_inventory_alerts" {}
+    end
+
+    Note over A,CT: commercetools has no alerts object.<br/>One tool call becomes four kinds of read.
+
+    A->>CT: 1. inventory where availableQuantity under 10
+    CT-->>A: candidate SKUs
+    A->>CT: 2. inventory for those SKUs, all supply channels
+    CT-->>A: per-channel quantities
+    A->>CT: 3. orders from the last 30 days
+    CT-->>A: order lines, for sales velocity
+    A->>CT: 4. one product lookup per flagged SKU (4 in parallel)
+    CT-->>A: listings
+
+    Note over A: Alert derived, not read<br/>sellable = the channel-less entry, what the shop can actually sell<br/>other channels reported separately, so nobody reorders stock they own<br/>the result carries a note "the window is 30 days"
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 3
+    A->>M: same conversation + the fenced alerts
+    M-->>A: "call present_digest" {items}
+    end
+    A-->>B: SSE ui event — digest card renders
+
+    rect rgb(238, 244, 255)
+    Note over A,M: ROUND 4
+    A->>M: same conversation + result
+    M-->>A: "call present_suggestions", then end_turn
+    end
+    A-->>B: SSE ui + text, then turn_complete
+
+    Note over B: The reply corrects the question<br/>"the data covers 30 days, not a week — no weekly pace is tracked"
+
+    Note over B,CT: 4 model calls. 8 commercetools calls. 11.5s.<br/>Hosts contacted: api.anthropic.com, api.commercetools.com, auth.commercetools.com
