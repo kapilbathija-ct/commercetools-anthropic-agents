@@ -19,7 +19,8 @@ test("a shopper can go from a chat request to a paid order", async ({ page }) =>
   });
 
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Guest");
+  // The shop greets the visitor by name; "Guest" was the pre-rebrand placeholder.
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Good morning");
 
   // 1. The agent puts the item in the cart. This is the only add-to-cart path in the app:
   //    the tile's own button asks the assistant rather than writing the cart directly.
