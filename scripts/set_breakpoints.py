@@ -21,37 +21,102 @@ import sqlite3
 import sys
 import uuid
 from pathlib import Path
+from typing import NamedTuple
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / ".venv/lib/python3.13/site-packages"
 STORAGE = Path.home() / "Library/Application Support/Code/User/workspaceStorage"
+
+
+class B(NamedTuple):
+    label: str
+    path: Path
+    needle: str
+    watch: str
+    enabled: bool = True
+    condition: str | None = None
+
 
 # (label, file, the substring whose line we want, what to look at when it pauses)
 WANTED = [
     # Anchor on the first *executable statement* of a function, never the `def` line: a
     # `def` runs when the module (or the enclosing function) is imported, so a breakpoint
     # there fires during app startup and the server never reaches the point of binding.
-    ("1 entry", ROOT / "service/main.py",
-     'append_user_turn(record, request.message', "request.message"),
-    ("2 model call", SITE / "shopping_agent_runtime/orchestrator.py", "client.messages.stream",
-     "request: system, tools (21), messages -- and no mcp_servers"),
-    ("3 dispatch", SITE / "commerce_common/execution.py", "handler = self._handlers.get(name)",
-     "name, tool_input, handler"),
-    ("4 our backend", ROOT / "ct_shopping/backend.py",
-     "platform_filters = self._price_filter(filters)", "query, filters.max_price"),
-    # two lines: the same post() also fetches the token higher up in the file
-    ("5 commercetools", ROOT / "ct_common/client.py",
-     "response = await self._http.post(\n            self._settings.graphql_url,",
-     "query, variables"),
-    ("6 mapping", ROOT / "ct_common/mapping.py", 'product_id = projection["id"]',
-     "projection in, Product out"),
-    ("7 result back", SITE / "shopping_agent_runtime/orchestrator.py",
-     "tool_result_block(block.id, outcome)", "the tool_result blocks"),
+    #
+    # Fields: label, file, unique needle, what to inspect, enabled=True, condition=None.
+    B(
+        "1 entry",
+        ROOT / "service/main.py",
+        "append_user_turn(record, request.message",
+        "request.message",
+    ),
+    B(
+        "2 model call",
+        SITE / "shopping_agent_runtime/orchestrator.py",
+        "client.messages.stream",
+        'list(request.keys()) / "mcp_servers" in request / len(request["tools"])',
+    ),
+    # Every tool passes through dispatch's first line. The handler lookup below is reached
+    # only by backend tools -- a presentation tool returns two branches earlier -- so
+    # without this stop present_products never pauses.
+    B(
+        "3 dispatch entry",
+        SITE / "commerce_common/execution.py",
+        "tool_input, _status = self.split_status(name, tool_input)",
+        "name, tool_input",
+    ),
+    B(
+        "4 handler lookup",
+        SITE / "commerce_common/execution.py",
+        "handler = self._handlers.get(name)",
+        "handler -- a bound method of our own class",
+    ),
+    B(
+        "5 our backend",
+        ROOT / "ct_shopping/backend.py",
+        "platform_filters = self._price_filter(filters)",
+        "query, filters",
+    ),
+    # Conditioned, because this one function serves every document in graphql.py. The
+    # storefront's own page load fires Browse and FindCart through here dozens of times
+    # before the shopper types anything.
+    B(
+        "6 commercetools",
+        ROOT / "ct_common/client.py",
+        "response = await self._http.post(\n            self._settings.graphql_url,",
+        "variables -- price selection and locale",
+        condition='"query Search" in query',
+    ),
+    # Off by default: fires once per product, so ~100 times during the page load's
+    # catalogue index. Tick it on once you are paused at the commercetools call.
+    B(
+        "7 mapping",
+        ROOT / "ct_common/mapping.py",
+        'product_id = projection["id"]',
+        'len(projection["variants"]) / len(master prices) / attribute_types',
+        enabled=False,
+    ),
+    B(
+        "8 result back",
+        SITE / "shopping_agent_runtime/orchestrator.py",
+        "tool_result_block(block.id, outcome)",
+        "block.name, outcome",
+    ),
     # the merchant path's two extra stops, disabled so they stay out of the shopping demo
-    ("8 merchant backend", ROOT / "ct_merchant/backend.py",
-     "async def load() -> list[InventoryAlert]:", "the per-channel stock problem", False),
-    ("9 merchant model", SITE / "merchant_agent_runtime/orchestrator.py",
-     "client.messages.stream", "same shape, different tools", False),
+    B(
+        "9 merchant backend",
+        ROOT / "ct_merchant/backend.py",
+        "async def load() -> list[InventoryAlert]:",
+        "the per-channel stock problem",
+        enabled=False,
+    ),
+    B(
+        "10 merchant model",
+        SITE / "merchant_agent_runtime/orchestrator.py",
+        "client.messages.stream",
+        "same shape, different tools",
+        enabled=False,
+    ),
 ]
 
 
@@ -91,13 +156,12 @@ def uri_json(path: Path) -> dict:
 
 def main(check: bool) -> int:
     resolved, missing = [], []
-    for label, path, needle, watch, *rest in WANTED:
-        enabled = rest[0] if rest else True
+    for label, path, needle, watch, enabled, condition in WANTED:
         line = line_of(path, needle)
         if line is None:
             missing.append((label, path))
             continue
-        resolved.append((label, path, line, watch, enabled))
+        resolved.append((label, path, line, watch, enabled, condition))
         flag = "" if enabled else "   (disabled)"
         try:
             shown = path.relative_to(ROOT)
@@ -105,6 +169,8 @@ def main(check: bool) -> int:
             shown = path
         print(f"  {label:<20} {shown}:{line}{flag}")
         print(f"  {'':<20}   look at: {watch}")
+        if condition:
+            print(f"  {'':<20}   only when: {condition}")
 
     for label, path in missing:
         print(f"  {label:<20} NOT FOUND in {path}", file=sys.stderr)
@@ -122,12 +188,12 @@ def main(check: bool) -> int:
             "enabled": enabled,
             "lineNumber": line,
             "column": None,
-            "condition": None,
+            "condition": condition,
             "hitCondition": None,
             "logMessage": None,
             "uri": uri_json(path),
         }
-        for _, path, line, _, enabled in resolved
+        for _, path, line, _, enabled, condition in resolved
     ]
 
     db = workspace_db()
